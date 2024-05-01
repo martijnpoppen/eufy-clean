@@ -1,0 +1,26 @@
+{
+  "name": "eufy-clean",
+  "version": "1.0.0",
+  "main": "./build/index.js",
+  "scripts": {
+    "dev": "tsnd --respawn --files ./src",
+    "build": "tsc -p tsconfig.build.json",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@tsconfig/node20": "^20.1.4",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "@tuyapi/cloud": "^0.6.2",
+    "axios": "^1.6.8",
+    "crypto": "^1.0.1",
+    "mqtt": "^5.5.5",
+    "tuyapi": "^7.5.2"
+  }
+}
