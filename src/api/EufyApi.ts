@@ -102,7 +102,7 @@ export class EufyApi {
             });
     }
 
-    public async getDeviceListOld(): Promise<string[]> {
+    public async getCloudDeviceList(): Promise<string[]> {
         //get general device list
         const devices = await this.requestClient({
             method: 'get',

@@ -22,7 +22,6 @@ class TuyaCloudRequestError extends Error {
  * @class
  * @param {Object} options construction options
  * @param {String} options.key API key
- * @param {Object} options.adapter ioBroker adapter
  * @param {String} options.secret API secret
  * @param {String} [options.apiEtVersion]
  * Tag existing in new mobile api version (as const '0.0.1'),

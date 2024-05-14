@@ -1,5 +1,5 @@
-import { EufyApi } from './api/EufyApi';
-import { TuyaCloudApi } from './api/TuyaCloudApi';
+import { EufyApi } from '../api/EufyApi';
+import { TuyaCloudApi } from '../api/TuyaCloudApi';
 
 // import { EufyLocal }
 
@@ -16,6 +16,7 @@ export class EufyLogin {
 
     public devices: string[];
     public newDevices: string[];
+    public cloudDevices: string[];
 
     constructor(username: string, password: string, openudid: string) {
         console.log('Login constructor');
@@ -48,10 +49,13 @@ export class EufyLogin {
             console.log('Login successful');
             this.devices = await this.tuyaApi.getDeviceList();
 
-            // Devices like the X10 and X9 are not supported by the Tuya Cloud API
+            // Devices like the X10 are not supported by the Tuya Cloud API
             this.newDevices = await this.eufyApi.getDeviceList();
 
-            console.log(this.eufyApi.userInfo)
+
+            // Get all devices from the Eufy Cloud API. 
+            // Currently we don't need it, but it could be useful in the future.
+            this.cloudDevices = await this.eufyApi.getCloudDeviceList();            
 
             console.log('devices', this.devices);   
             console.log('newDevices', this.newDevices);
