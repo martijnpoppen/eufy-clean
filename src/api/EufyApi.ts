@@ -32,7 +32,7 @@ export class EufyApi {
     public async eufyLogin(): Promise<void> {
         await this.requestClient({
             method: 'post',
-            url: 'https://home-api.eufylife.com/v1/user/email/login',
+            url: 'https://home-api.eufylife.com/v1/user/v2/email/login/',
             headers: {
                 category: 'Home',
                 Accept: '*/*',
@@ -143,7 +143,7 @@ export class EufyApi {
                 timezone: 'Europe/Berlin',
                 openudid: this.openudid,
                 language: 'de',
-                country: 'US',
+                country: 'DE',
                 'os-version': 'Android',
                 'model-type': 'PHONE',
                 'app-name': 'eufy_home',
@@ -187,7 +187,7 @@ export class EufyApi {
                 timezone: 'Europe/Berlin',
                 openudid: this.openudid,
                 language: 'de',
-                country: 'US',
+                country: 'DE',
                 'os-version': 'Android',
                 'model-type': 'PHONE',
                 'app-name': 'eufy_home',
@@ -232,7 +232,7 @@ export class EufyApi {
                 timezone: 'Europe/Berlin',
                 openudid: this.openudid,
                 language: 'de',
-                country: 'US',
+                country: 'DE',
                 'os-version': 'Android',
                 'model-type': 'PHONE',
                 'app-name': 'eufy_home',
