@@ -1,64 +1,86 @@
-import { EufyLogin } from './Login';
-import { EufyMqtt } from './api/EufyMqtt';
-import crypto, { createECDH } from 'crypto';
-import { sleep, decryptAPIData } from './lib/utils';
+import crypto from 'crypto';
 
-export class EufyClean {
-    private eufyMqtt: EufyMqtt | null = null;
+import { EufyLogin } from './controllers/Login';
+import { LocalConnect } from './controllers/LocalConnect';
+import { CloudConnect } from './controllers/CloudConnect';
+
+export class EufyCleanLogin {
     private eufyLogin: EufyLogin;
-    private ecdh = createECDH("prime256v1");
-    private readonly SERVER_PUBLIC_KEY = "04c5c00c4f8d1197cc7c3167c52bf7acb054d722f0ef08dcd7e0883236e0d72a3868d9750cb47fa4619248f3d83f0f662671dadc6e2d31c2f41db0161651c7c076";
     private openudid: string;
 
     private devices: any[] = [];
     private newDevices: any[] = [];
+    private cloudDevices: any[] = [];
 
-    mqttCredentials: any;
+    private username: string;
+    private password: string;
 
     // if the deviceconfig and mqttCredentials are provided the connection will be automatically setup
-    constructor(deviceConfig?: any, deviceType?: "device" | "newDevice", mqttCredentials?: any) {
+    constructor(username: string, password: string) {
         console.log('EufyClean constructor');
 
+        this.username = username;
+        this.password = password;
         this.openudid = crypto.randomBytes(16).toString('hex');
-
-        if (deviceConfig && deviceType === "device") {
-            this.devices.push(deviceConfig);
-            // this.setupLocal();
-        }
-
-        if (deviceConfig && deviceType === "newDevice") {
-            this.newDevices.push(deviceConfig);
-
-            this.setupMqtt();
-        }
     }
 
     // Use this method to login and pair new devices.
-    public async login(username, password): Promise<void> {
+    public async login(): Promise<any> {
         console.log('EufyClean init');
 
-        this.eufyLogin = new EufyLogin(username, password, this.openudid);
+        this.eufyLogin = new EufyLogin(this.username, this.password, this.openudid);
 
         await this.eufyLogin.init();
 
         this.devices = [...this.devices, ...this.eufyLogin.devices];
         this.newDevices = [...this.newDevices, ...this.eufyLogin.newDevices];
+        this.cloudDevices = [...this.cloudDevices, ...this.eufyLogin.cloudDevices];
 
-        this.mqttCredentials = this.eufyLogin.mqttCredentials;
-
-        // await this.setupLegacy();
-        // await this.setupNew();
-        this.setupMqtt();
+        return {
+            devices: this.devices,
+            newDevices: this.devices,
+            mqttCredentials: this.eufyLogin.mqttCredentials,
+            openudid: this.openudid
+        };
     }
 
-    public async setupMqtt(): Promise<void> {
-        if (this.mqttCredentials) {
-            console.info('MQTT Credentials found');
-            console.info('Setup MQTT Connection');
-            this.eufyMqtt = new EufyMqtt(this.mqttCredentials, this.openudid, this.newDevices);
-            await this.eufyMqtt.connectMqtt();
+
+}
+
+export class EufyCleanDevice {
+    private openudid: string;
+    public localConnect: LocalConnect | null = null;
+    public cloudConnect: CloudConnect | null = null;
+
+    constructor(deviceConfig: any, deviceType: "localDevice" | "cloudDevice", mqttCredentials?: any) {
+        console.log('EufyCleanDevice constructor');
+
+        this.openudid = crypto.randomBytes(16).toString('hex');
+
+        if (deviceType === "localDevice") {
+            this.localConnect = new LocalConnect(deviceConfig);
         }
+
+        if (deviceType === "cloudDevice") {
+            this.cloudConnect = new CloudConnect(mqttCredentials, deviceConfig, this.openudid);
+        }
+    }
+
+    getInstance = () => {
+        if (this.localConnect) {
+            return this.localConnect;
+        }
+
+        if (this.cloudConnect) {
+            return this.cloudConnect;
+        }
+
+        return null;
     }
 }
 
-new EufyClean().login();
+async function main() {
+
+}
+
+main();

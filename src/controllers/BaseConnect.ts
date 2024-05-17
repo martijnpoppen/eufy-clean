@@ -26,6 +26,8 @@ export class BaseConnect {
         WORK_MODE: '152',
         WORK_STATUS: '153',
         CLEANING_PARAMETERS: '154',
+        CLEANING_STATISTICS: '167',
+        ACCESSORIES_STATUS: '168',
         GO_HOME: '173',
         CLEAN_SPEED: '158',
         FIND_ROBOT: '160',
