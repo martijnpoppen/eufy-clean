@@ -1,12 +1,4 @@
-import { StatusResponse } from '../types/LegacyConnect';
-
-export class BaseConnect {
-    public robovacData: any;
-    public statuses: StatusResponse = null;
-    public lastStatusUpdate: number = null;
-    public maxStatusUpdateAge: number = 1000 * (1 * 30); //30 Seconds
-    public timeoutDuration: number = 2;
-    
+export class Base {    
     public legacyDPSMap = {
         PLAY_PAUSE: '2',
         DIRECTION: '3',

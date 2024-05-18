@@ -1,12 +1,13 @@
 import { EufyApi } from '../api/EufyApi';
 import { TuyaCloudApi } from '../api/TuyaCloudApi';
+import { Base } from './Base';
 
 // import { EufyLocal }
 
-export class EufyLogin {
+export class EufyLogin extends Base {
     private tuyaApi: TuyaCloudApi | null = null;
     private eufyApi: EufyApi;
-    
+
 
     private username: string;
     private password: string;
@@ -14,11 +15,13 @@ export class EufyLogin {
     private sid: string;
     public mqttCredentials: any;
 
-    public devices: string[];
-    public newDevices: string[];
-    public cloudDevices: string[];
+    public cloudDevices: any[] = [];
+    public mqttDevices: any[] = [];
+    public eufyApiDevices: any[] = [];
 
     constructor(username: string, password: string, openudid: string) {
+        super();
+
         console.log('Login constructor');
 
         this.username = username;
@@ -44,21 +47,55 @@ export class EufyLogin {
         }
     }
 
+    public async softLogin(): Promise<void> {
+        const eufyLogin = await this.eufyApi.sofLogin();
+
+        if (eufyLogin) {
+            console.log('Eufy login successful');
+
+            this.tuyaApi = new TuyaCloudApi(this.username, this.password, this.eufyApi.session.user_id);
+            this.sid = await this.tuyaApi.login();
+        }
+    }
+
     public async getDevices(): Promise<any> {
         if (this.sid) {
             console.log('Login successful');
-            this.devices = await this.tuyaApi.getDeviceList();
+            this.cloudDevices = await this.tuyaApi.getDeviceList();
+            this.cloudDevices = this.cloudDevices.map(device => ({
+                ...device,
+                apiType: this.checkApiType(device.dps)
+            }));
 
             // Devices like the X10 are not supported by the Tuya Cloud API
-            this.newDevices = await this.eufyApi.getDeviceList();
+            this.mqttDevices = await this.eufyApi.getDeviceList();
 
 
             // Get all devices from the Eufy Cloud API. 
             // Currently we don't need it, but it could be useful in the future.
-            this.cloudDevices = await this.eufyApi.getCloudDeviceList();            
+            this.eufyApiDevices = await this.eufyApi.getCloudDeviceList();
 
-            console.log('devices', this.devices);   
-            console.log('newDevices', this.newDevices);
+            // console.log('devices', this.devices);   
+            // console.log('newDevices', this.newDevices);
         }
+    }
+
+    public async getCloudDevice(deviceId: string): Promise<any> {
+        await this.tuyaApi.login();
+        return await this.tuyaApi.getDevice(deviceId);
+    }
+
+    public async getMqttDevice(deviceId: string): Promise<any> {
+        this.mqttDevices = await this.eufyApi.getDeviceList();
+
+        return this.mqttDevices.find(device => device.devId === deviceId);
+    }
+
+    private checkApiType(dps) {
+        if (Object.values(this.novelDPSMap).some(k => k in dps)) {
+            return 'novel'
+        }
+
+        return 'legacy'
     }
 }

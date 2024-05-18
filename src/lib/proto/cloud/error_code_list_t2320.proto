@@ -2,8 +2,6 @@ syntax = "proto3";
 
 // option optimize_for = LITE_RUNTIME;
 
-package proto.cloud.t23xx;
-
 enum ErrorCodeList {
     E000_NONE = 0;
 

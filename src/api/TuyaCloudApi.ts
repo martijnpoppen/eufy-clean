@@ -44,7 +44,7 @@ export class TuyaCloudApi {
             const devices = await this.tuyaCloud.request({ action: 'tuya.m.my.group.device.list', gid: group.groupId });
             const sharedDevices = await this.tuyaCloud.request({ action: 'tuya.m.my.shared.device.list' });
             
-            console.info(`Found ${devices.length} devices and ${sharedDevices.length} sharedDevices via Tuya Cloud`);
+            console.debug(`Found ${devices.length} devices and ${sharedDevices.length} sharedDevices via Tuya Cloud`);
 
             return [...devices, ...sharedDevices];
         }
@@ -55,9 +55,6 @@ export class TuyaCloudApi {
         for (const group of groups) {            
             const devices = await this.tuyaCloud.request({ action: 'tuya.m.my.group.device.list', gid: group.groupId });
             const sharedDevices = await this.tuyaCloud.request({ action: 'tuya.m.my.shared.device.list' });
-
-            
-            console.info(`Found ${devices.length} devices and ${sharedDevices.length} sharedDevices via Tuya Cloud`);
             
             return [...devices, ...sharedDevices].find((device) => device.devId === deviceId);
         }

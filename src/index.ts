@@ -3,14 +3,11 @@ import crypto from 'crypto';
 import { EufyLogin } from './controllers/Login';
 import { LocalConnect } from './controllers/LocalConnect';
 import { CloudConnect } from './controllers/CloudConnect';
+import { MqttConnect } from './controllers/MqttConnect';
 
 export class EufyCleanLogin {
     private eufyLogin: EufyLogin;
     private openudid: string;
-
-    private devices: any[] = [];
-    private newDevices: any[] = [];
-    private cloudDevices: any[] = [];
 
     private username: string;
     private password: string;
@@ -32,47 +29,51 @@ export class EufyCleanLogin {
 
         await this.eufyLogin.init();
 
-        this.devices = [...this.devices, ...this.eufyLogin.devices];
-        this.newDevices = [...this.newDevices, ...this.eufyLogin.newDevices];
-        this.cloudDevices = [...this.cloudDevices, ...this.eufyLogin.cloudDevices];
-
         return {
-            devices: this.devices,
-            newDevices: this.devices,
+            cloudDevices: this.eufyLogin.cloudDevices,
+            mqttDevices: this.eufyLogin.mqttDevices,
             mqttCredentials: this.eufyLogin.mqttCredentials,
             openudid: this.openudid
         };
     }
-
-
 }
 
 export class EufyCleanDevice {
     private openudid: string;
     public localConnect: LocalConnect | null = null;
     public cloudConnect: CloudConnect | null = null;
+    public mqqtConnect: MqttConnect | null = null;
 
-    constructor(deviceConfig: any, deviceType: "localDevice" | "cloudDevice", mqttCredentials?: any) {
-        console.log('EufyCleanDevice constructor');
+    constructor(deviceConfig: any, deviceType: "localDevice" | "cloudDevice" | "mqttDevice", mqttCredentials?: any) {
+        console.log('EufyCleanDevice constructor', deviceType);
 
         this.openudid = crypto.randomBytes(16).toString('hex');
 
         if (deviceType === "localDevice") {
-            this.localConnect = new LocalConnect(deviceConfig);
+            // this.localConnect = new LocalConnect(deviceConfig);
         }
 
         if (deviceType === "cloudDevice") {
-            this.cloudConnect = new CloudConnect(mqttCredentials, deviceConfig, this.openudid);
+            this.cloudConnect = new CloudConnect(deviceConfig, this.openudid);
+        }
+
+        if (deviceType === "mqttDevice") {
+            this.mqqtConnect = new MqttConnect(mqttCredentials, deviceConfig, this.openudid);
         }
     }
 
     getInstance = () => {
+        // Legacy, local connection
         if (this.localConnect) {
             return this.localConnect;
         }
 
         if (this.cloudConnect) {
             return this.cloudConnect;
+        }
+
+        if (this.mqqtConnect) {
+            return this.mqqtConnect;
         }
 
         return null;

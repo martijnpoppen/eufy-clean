@@ -10,17 +10,17 @@ export const sleep = async (ms: number): Promise<void> => {
 export const getProtoFile = function (proto) {
     const root = new protobuf.Root();
     root.resolvePath = (origin, target) => {
-      if(origin.length) {
+        if (origin.length) {
+            return path.resolve(__dirname, `${target}`);
+        }
+
         return path.resolve(__dirname, `${target}`);
-      }
-    
-      return target
-      
+
     }
     return root.loadSync(proto);
 }
 
-export const getData = async function (proto, type, base64Value) {
+export const getDecodedData = async function (proto, type, base64Value) {
     const root = await getProtoFile(proto);
 
     const protoLookupType = root.lookupType(type);
@@ -38,33 +38,48 @@ export const getData = async function (proto, type, base64Value) {
     return decodedObject;
 };
 
-// export const getMultiData = async function (proto, type, base64Value) {
-//     const root = await getProtoFile(proto);
+export const getFlatData = async function (proto, type, number) {
+    const root = await getProtoFile(proto);
 
-//     const protoLookupType = root.lookupType(type);
-//     const buffer = Buffer.from(base64Value, 'base64');
-//     const values = [];
+    const protoLookupType = root[type];
+console.log('protoLookupType', protoLookupType);
+    const decodedMessage = getKeyByValue(protoLookupType, number);
 
-//     if(protoLookupType.fields) {
-//         const fieldKeys = Object.values(protoLookupType.fields).map((field) => field?.type);
+    return decodedMessage;
+};
 
-//         fieldKeys.forEach((fieldKey) => {
-//             try {
-//                 const field = root.lookupType(fieldKey);
-//                 const decodedMessage = field.decodeDelimited(buffer);
-//                 const decodedObject = field.toObject(decodedMessage, {
-//                     longs: String, // Long objects will be converted to strings
-//                     enums: String, // Enum values will be converted to strings
-//                     bytes: String // Bytes will be converted to base64 strings
-//                 });
+export const getMultiData = async function (proto, type, base64Value) {
+    const root = await getProtoFile(proto);
 
-//                 values.push({key: fieldKey, ...decodedObject});
-//             } catch (e) {
-//                 // console.log('error', e);
-//             }
-//         });
-//     }
+    const protoLookupType = root.lookupType(type);
+    const buffer = Buffer.from(base64Value, 'base64');
+    const values = [];
 
-//     return values;
+    if(protoLookupType.fields) {
+        // @ts-ignore
+        const fieldKeys = Object.values(protoLookupType.fields).map((field) => field?.type);
 
-// }
+        fieldKeys.forEach((fieldKey) => {
+            try {
+                const field = root.lookupType(fieldKey);
+                const decodedMessage = field.decodeDelimited(buffer);
+                const decodedObject = field.toObject(decodedMessage, {
+                    longs: String, // Long objects will be converted to strings
+                    enums: String, // Enum values will be converted to strings
+                    bytes: String // Bytes will be converted to base64 strings
+                });
+
+                values.push({key: fieldKey, ...decodedObject});
+            } catch (e) {
+                // console.log('error', e);
+            }
+        });
+    }
+
+    return values;
+
+}
+
+const getKeyByValue = function(object, value) {
+    return Object.keys(object).find(key => object[key] === value);
+  }

@@ -18,7 +18,6 @@ export class EufyApi {
         this.openudid = openudid;
 
         this.requestClient = axios.create();
-
     }
 
     public async login(): Promise<any> {
@@ -27,6 +26,12 @@ export class EufyApi {
         const mqtt = await this.getMqttCredentials();
 
         return { login, user, mqtt };
+    }
+
+    public async sofLogin(): Promise<any> {
+        const login = await this.eufyLogin();
+
+        return { login };
     }
 
     public async eufyLogin(): Promise<void> {
@@ -116,8 +121,8 @@ export class EufyApi {
                 token: this.session.access_token,
                 openudid: this.openudid,
                 clienttype: '2',
-                language: 'de',
-                country: 'DE',
+                language: 'nl',
+                country: 'NL',
             },
         })
             .then(async (res) => {
