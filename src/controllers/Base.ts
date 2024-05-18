@@ -9,7 +9,6 @@ export class Base {
         FIND_ROBOT: '103',
         BATTERY_LEVEL: '104',
         ERROR_CODE: '106',
-
     }
 
     public novelDPSMap = {
@@ -29,7 +28,5 @@ export class Base {
 
     public DPSMap = this.legacyDPSMap;
 
-    constructor() {
-        console.log('BaseConnect constructor');
-    }
+    constructor() {}
 }

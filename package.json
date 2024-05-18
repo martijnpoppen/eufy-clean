@@ -4,7 +4,9 @@
   "main": "./build/index.js",
   "scripts": {
     "dev": "tsnd --respawn --files ./src",
-    "build": "tsc -p tsconfig.build.json",
+    "clean": "rimraf build/",
+    "copy-files": "copyfiles -u 1 src/**/*.proto src/**/*.js build/",
+    "build": "yarn clean && tsc && yarn copy-files",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -13,6 +15,8 @@
   "description": "",
   "devDependencies": {
     "@tsconfig/node20": "^20.1.4",
+    "copyfiles": "^2.4.1",
+    "rimraf": "^5.0.7",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.4.5"
   },

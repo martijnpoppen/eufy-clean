@@ -1,15 +1,20 @@
 // Communication with the Local Tuya API
 // This is only supported for "old" devices like the RoboVac G30
 import TuyAPI from 'tuyapi';
-import { BaseConnect } from './BaseConnect';
-import {getData } from '../lib/utils';
+import { Base } from './Base';
+import {getDecodedData } from '../lib/utils';
 import { CleanSpeed, ErrorCode, WorkStatus, WorkMode, Direction, StatusResponse } from '../types/LegacyConnect';
 
-export class LocalConnect extends BaseConnect {
+export class LocalConnect extends Base {
     public api: any;
     public connected: boolean = false;
     public debugLog: boolean;
     public novelApi: boolean = false
+    public robovacData: any = {};
+    public statuses: StatusResponse = null;
+    public lastStatusUpdate: number = null;
+    public maxStatusUpdateAge: number = 1000 * (1 * 30); //30 Seconds
+    public timeoutDuration: number = 2;
 
     constructor(config: { deviceId: string, localKey: string, ip?: string, port?: 6668 }, debugLog: boolean = false) {
         super();
@@ -128,7 +133,7 @@ export class LocalConnect extends BaseConnect {
         return this.connected;
     }
 
-    async getData() {
+    async getDecodedData() {
         return this.robovacData;
     }
 
@@ -169,7 +174,7 @@ export class LocalConnect extends BaseConnect {
         return <CleanSpeed>statuses.dps[this.DPSMap.CLEAN_SPEED];
     }
 
-    async setCleanSpeed(cleanSpeed: CleanSpeed) {
+    async setCleanSpeed(cleanSpeed) {
         await this.doWork(async () => {
             await this.set({
                 [this.DPSMap.CLEAN_SPEED]: cleanSpeed
@@ -238,7 +243,7 @@ export class LocalConnect extends BaseConnect {
         }
         
         if(this.novelApi) {
-            const WorkStatus = await getData('proto/cloud/work_status.proto', 'WorkStatus', this.robovacData.WORK_STATUS);
+            const WorkStatus = await getDecodedData('proto/cloud/work_status.proto', 'WorkStatus', this.robovacData.WORK_STATUS);
             return WorkStatus?.state?.toLowerCase() || 'COMPLETED'.toLowerCase();
         }   
 

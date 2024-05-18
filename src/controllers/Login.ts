@@ -2,12 +2,9 @@ import { EufyApi } from '../api/EufyApi';
 import { TuyaCloudApi } from '../api/TuyaCloudApi';
 import { Base } from './Base';
 
-// import { EufyLocal }
-
 export class EufyLogin extends Base {
     private tuyaApi: TuyaCloudApi | null = null;
     private eufyApi: EufyApi;
-
 
     private username: string;
     private password: string;
@@ -21,8 +18,6 @@ export class EufyLogin extends Base {
 
     constructor(username: string, password: string, openudid: string) {
         super();
-
-        console.log('Login constructor');
 
         this.username = username;
         this.password = password;
@@ -58,6 +53,12 @@ export class EufyLogin extends Base {
         }
     }
 
+    public async checkLogin(): Promise<void> {
+        if(!this.sid) {
+            throw new Error("Not logged in");
+        }
+    }
+
     public async getDevices(): Promise<any> {
         if (this.sid) {
             console.log('Login successful');
@@ -74,15 +75,26 @@ export class EufyLogin extends Base {
             // Get all devices from the Eufy Cloud API. 
             // Currently we don't need it, but it could be useful in the future.
             this.eufyApiDevices = await this.eufyApi.getCloudDeviceList();
-
-            // console.log('devices', this.devices);   
-            // console.log('newDevices', this.newDevices);
         }
     }
 
     public async getCloudDevice(deviceId: string): Promise<any> {
-        await this.tuyaApi.login();
-        return await this.tuyaApi.getDevice(deviceId);
+        try {
+            await this.checkLogin();
+            return await this.tuyaApi.getDevice(deviceId);
+        } catch (error) {
+            throw new Error(error);
+            
+        }
+    }
+
+    public async sendCloudCommand(deviceId: string, dps: any): Promise<any> {
+        try {
+            await this.checkLogin();
+            return await this.tuyaApi.sendCommand(deviceId, dps);
+        } catch (error) {
+            throw new Error(error);
+        }
     }
 
     public async getMqttDevice(deviceId: string): Promise<any> {

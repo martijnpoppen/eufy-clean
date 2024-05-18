@@ -42,27 +42,27 @@ export class EufyCleanDevice {
     private openudid: string;
     public localConnect: LocalConnect | null = null;
     public cloudConnect: CloudConnect | null = null;
-    public mqqtConnect: MqttConnect | null = null;
+    // public mqqtConnect: MqttConnect | null = null;
 
-    constructor(deviceConfig: any, deviceType: "localDevice" | "cloudDevice" | "mqttDevice", mqttCredentials?: any) {
-        console.log('EufyCleanDevice constructor', deviceType);
+    constructor(deviceConfig: any, mqttCredentials?: any) {
+        console.log('EufyCleanDevice constructor');
 
         this.openudid = crypto.randomBytes(16).toString('hex');
 
-        if (deviceType === "localDevice") {
+        if ('localKey' in deviceConfig) {
             // this.localConnect = new LocalConnect(deviceConfig);
         }
 
-        if (deviceType === "cloudDevice") {
+        if (!('localKey' in deviceConfig) && !mqttCredentials) {
             this.cloudConnect = new CloudConnect(deviceConfig, this.openudid);
         }
 
-        if (deviceType === "mqttDevice") {
-            this.mqqtConnect = new MqttConnect(mqttCredentials, deviceConfig, this.openudid);
-        }
+        // if (mqttCredentials) {
+        //     this.mqqtConnect = new MqttConnect(mqttCredentials, deviceConfig, this.openudid);
+        // }
     }
 
-    getInstance = () => {
+    public getInstance = () => {
         // Legacy, local connection
         if (this.localConnect) {
             return this.localConnect;
@@ -72,9 +72,9 @@ export class EufyCleanDevice {
             return this.cloudConnect;
         }
 
-        if (this.mqqtConnect) {
-            return this.mqqtConnect;
-        }
+        // if (this.mqqtConnect) {
+        //     return this.mqqtConnect;
+        // }
 
         return null;
     }

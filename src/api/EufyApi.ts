@@ -11,8 +11,6 @@ export class EufyApi {
     public userInfo: any;
 
     constructor(username: string, password: string, openudid: string) {
-        console.log('EufyApi constructor');
-
         this.username = username;
         this.password = password;
         this.openudid = openudid;
@@ -60,7 +58,7 @@ export class EufyApi {
         })
             .then((res) => {
                 if (res.data.access_token) {
-                    console.info('Login successful', res.data);
+                    // console.info('Login successful', res.data);
                     this.session = res.data;
                 } else {
                     console.error('Login failed: ' + JSON.stringify(res.data));

@@ -40,9 +40,7 @@ export const getDecodedData = async function (proto, type, base64Value) {
 
 export const getFlatData = async function (proto, type, number) {
     const root = await getProtoFile(proto);
-
     const protoLookupType = root[type];
-console.log('protoLookupType', protoLookupType);
     const decodedMessage = getKeyByValue(protoLookupType, number);
 
     return decodedMessage;
