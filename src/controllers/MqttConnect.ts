@@ -1,16 +1,14 @@
 // Communication with the Eufy cloud - This goes via MQTT
-// This is only supported for "new" devices like the RoboVac X10
+// This is only supported for "new" devices like the RoboVac X10 and RoboVac S1
 import mqtt from 'mqtt';
 import { SharedConnect } from './SharedConnect';
 import { EufyLogin } from '../controllers/Login';
-import { sleep, decode, encode } from '../lib/utils';
+import { sleep } from '../lib/utils';
 
 export class MqttConnect extends SharedConnect {
     private mqttClient: any;
     private mqttCredentials: any;
     private openudid: string;
-    private deviceId: string;
-    private deviceModel: string;
 
     private eufyAPi: EufyLogin;
 

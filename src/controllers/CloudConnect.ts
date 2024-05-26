@@ -1,18 +1,17 @@
-import { getFlatData, decode, getMultiData, encode } from '../lib/utils';
 import { EufyLogin } from '../controllers/Login';
 import { SharedConnect } from './SharedConnect';
 
 export class CloudConnect extends SharedConnect {
     private autoUpdate: number;
-    private deviceId: string;
 
     private eufyAPi: EufyLogin;
 
-    constructor(config: { username: string, password: string, deviceId: string, autoUpdate?: number, debug?: boolean }, openudid: string) {
+    constructor(config: { username: string, password: string, deviceId: string, deviceModel?: string, autoUpdate?: number, debug?: boolean }, openudid: string) {
         super(config);
 
         this.eufyAPi = new EufyLogin(config.username, config.password, openudid);
         this.deviceId = config.deviceId;
+        this.deviceModel = config.deviceModel || '';
 
         this.autoUpdate = config.autoUpdate || 0;
         this.debugLog = config.debug || false;

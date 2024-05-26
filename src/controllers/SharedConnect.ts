@@ -1,14 +1,20 @@
 import { Base } from "./Base";
-import { getFlatData, decode, getMultiData, encode } from '../lib/utils';
+import { WorkMode } from "../constants/state.constants";
+import { X_SERIES } from "../constants/devices.constants";
+import { decode, getMultiData, encode } from '../lib/utils';
 
 export class SharedConnect extends Base {
     public novelApi: boolean = false;
     public robovacData: any = {};
     public debugLog: boolean;
+    public deviceId: string;
+    public deviceModel: string;
 
-    constructor(config: { debug?: boolean }) {
+    constructor(config: { deviceId: string, deviceModel?: string, debug?: boolean }) {
         super();
 
+        this.deviceId = config.deviceId;
+        this.deviceModel = config.deviceModel || '';
         this.debugLog = config.debug || false;
     }
 
@@ -156,7 +162,7 @@ export class SharedConnect extends Base {
     async setCleanSpeed(cleanSpeed) {
         try {
             console.log('Setting clean speed to: ', cleanSpeed)
-            await this.sendCommand({
+            return await this.sendCommand({
                 [this.DPSMap.CLEAN_SPEED]: cleanSpeed
             })
         } catch (error) {
@@ -176,7 +182,7 @@ export class SharedConnect extends Base {
             })
         }
 
-        await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
+        return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
     }
 
     async pause() {
@@ -191,7 +197,7 @@ export class SharedConnect extends Base {
             })
         }
 
-        await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
+        return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
     }
 
     async goHome() {
@@ -203,10 +209,10 @@ export class SharedConnect extends Base {
                 }
             });
 
-            await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
+            return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
         }
 
-        await this.sendCommand({ [this.DPSMap.GO_HOME]: true })
+        return await this.sendCommand({ [this.DPSMap.GO_HOME]: true })
     }
 
     async spotClean() {
@@ -218,7 +224,7 @@ export class SharedConnect extends Base {
                 }
             });
 
-            await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
+            return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
         }
     }
 
@@ -231,21 +237,17 @@ export class SharedConnect extends Base {
                 }
             });
 
-            await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
+            return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
         }
-    }
 
-    async smallRoomClean() {
-        if (this.novelApi) {
-            const value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
-                method: 'START_GOHOME',
-                autoClean: {
-                    cleanTimes: 1
-                }
-            });
 
-            await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
+        if(X_SERIES.includes(this.model)) {
+            await this.sendCommand({ [this.DPSMap.WORK_MODE]:  WorkMode.SMALL_ROOM })
+            return await this.play();
         }
+    
+        await this.sendCommand({ [this.DPSMap.WORK_MODE]:  WorkMode.ROOM })
+        return await this.play();
     }
 
     async setWorkMode(workMode: 'AUTO' | 'SPOT' | 'ROOM' | 'SMALL_ROOM') {
@@ -257,8 +259,6 @@ export class SharedConnect extends Base {
                 await this.spotClean();
             case 'ROOM':
                 await this.roomClean();
-            case 'SMALL_ROOM':
-                await this.smallRoomClean();
             default:
                 await this.pause();
                 break;

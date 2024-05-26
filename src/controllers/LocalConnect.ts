@@ -13,7 +13,7 @@ export class LocalConnect extends SharedConnect {
     public maxStatusUpdateAge: number = 1000 * (1 * 30); //30 Seconds
     public timeoutDuration: number = 2;
 
-    constructor(config: { deviceId: string, localKey?: string, ip?: string, debug?: boolean }) {
+    constructor(config: { deviceId: string, localKey?: string, ip?: string, debug?: boolean, deviceModel?: string}) {
         super(config);
 
         if (!config.deviceId) {
