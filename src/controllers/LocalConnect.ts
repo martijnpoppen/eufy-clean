@@ -1,36 +1,33 @@
 // Communication with the Local Tuya API
 // This is only supported for "old" devices like the RoboVac G30
 import TuyAPI from 'tuyapi';
-import { Base } from './Base';
-import {getDecodedData } from '../lib/utils';
+import {decode } from '../lib/utils';
 import { CleanSpeed, ErrorCode, WorkStatus, WorkMode, Direction, StatusResponse } from '../types/LegacyConnect';
+import { SharedConnect } from './SharedConnect';
 
-export class LocalConnect extends Base {
+export class LocalConnect extends SharedConnect {
     public api: any;
     public connected: boolean = false;
-    public debugLog: boolean;
-    public novelApi: boolean = false
-    public robovacData: any = {};
     public statuses: StatusResponse = null;
     public lastStatusUpdate: number = null;
     public maxStatusUpdateAge: number = 1000 * (1 * 30); //30 Seconds
     public timeoutDuration: number = 2;
 
-    constructor(config: { deviceId: string, localKey: string, ip?: string, port?: 6668 }, debugLog: boolean = false) {
-        super();
+    constructor(config: { deviceId: string, localKey?: string, ip?: string, debug?: boolean }) {
+        super(config);
 
         if (!config.deviceId) {
             throw new Error('You must pass through deviceId');
         }
 
-        this.debugLog = debugLog;
+        this.debugLog = config.debug || false;
 
         this.api = new TuyAPI(
             {
                 id: config.deviceId,
                 key: config.localKey,
                 ip: config.ip,
-                port: config.port,
+                port: 6668,
                 version: '3.3'
             }
         );
@@ -133,27 +130,11 @@ export class LocalConnect extends Base {
         return this.connected;
     }
 
-    async getDecodedData() {
+    async decode() {
         return this.robovacData;
     }
 
-    async doWork(work: () => Promise<any>): Promise<any> {
-        if (!this.api.device.id || !this.api.device.ip) {
 
-            console.log('Looking for device...');
-
-            try {
-                await this.api.find({ timeout: this.timeoutDuration });
-
-                console.log(`Found device ${this.api.device.id} at ${this.api.device.ip}`);
-
-            } catch (err) {
-                console.log(err);
-            }
-        }
-        await this.connect();
-        return await work();
-    }
 
     async getStatuses(force: boolean = false): Promise<{ devId: string, dps: { [key: string]: string | boolean | number } }> {
         if (force || (new Date()).getTime() - this.lastStatusUpdate > this.maxStatusUpdateAge) {
@@ -180,16 +161,6 @@ export class LocalConnect extends Base {
                 [this.DPSMap.CLEAN_SPEED]: cleanSpeed
             })
         });
-    }
-
-    async getPlayPause(force: boolean = false): Promise<boolean> {
-        let statuses = await this.getStatuses(force);
-
-        if (this.novelApi) {
-
-        }
-
-        return <boolean>statuses.dps[this.DPSMap.PLAY_PAUSE];
     }
 
     async setPlayPause(state: boolean) {
@@ -243,19 +214,11 @@ export class LocalConnect extends Base {
         }
         
         if(this.novelApi) {
-            const WorkStatus = await getDecodedData('proto/cloud/work_status.proto', 'WorkStatus', this.robovacData.WORK_STATUS);
+            const WorkStatus = await decode('proto/cloud/work_status.proto', 'WorkStatus', this.robovacData.WORK_STATUS);
             return WorkStatus?.state?.toLowerCase() || 'COMPLETED'.toLowerCase();
         }   
 
         return this.robovacData.WORK_STATUS;
-    }
-
-    async setWorkStatus(workStatus: WorkStatus) {
-        await this.doWork(async () => {
-            await this.set({
-                [this.DPSMap.WORK_STATUS]: workStatus
-            })
-        });
     }
 
     async goHome() {
@@ -266,55 +229,32 @@ export class LocalConnect extends Base {
         });
     }
 
-    async setDirection(direction: Direction) {
-        await this.doWork(async () => {
-            await this.set({
-                [this.DPSMap.DIRECTION]: direction
-            })
-        });
-    }
+    async doWork(work: () => Promise<any>): Promise<any> {
+        if (!this.api.device.id || !this.api.device.ip) {
 
-    async setFindRobot(state: boolean) {
-        return await this.doWork(async () => {
-            await this.set({
-                [this.DPSMap.FIND_ROBOT]: state
-            })
-        });
-    }
+            console.log('Looking for device...');
 
-    async getFindRobot(force: boolean = false) {
-        let statuses = await this.getStatuses(force);
-        return <boolean>statuses.dps[this.DPSMap.FIND_ROBOT];
-    }
+            try {
+                await this.api.find({ timeout: this.timeoutDuration });
 
-    async getBatteyLevel() {
-        if (this.robovacData.BATTERY_LEVEL in this.DPSMap) {
-            return 100;
+                console.log(`Found device ${this.api.device.id} at ${this.api.device.ip}`);
+
+            } catch (err) {
+                console.log(err);
+            }
         }
-        
-        // console.log('getBatteyLevel', this.robovacData.BATTERY_LEVEL);
-
-        return <number>this.robovacData.BATTERY_LEVEL;
+        await this.connect();
+        return await work();
     }
 
-    async getErrorCode(force: boolean = false): Promise<ErrorCode> {
-        let statuses = await this.getStatuses(force);
-        return <ErrorCode>statuses.dps[this.DPSMap.ERROR_CODE];
-    }
-
-    async set(data: { [key: string]: string | number | boolean }) {
+    async sendCommand(data: { [key: string]: string | number | boolean }) {
         if (this.debugLog) {
             console.log(`Setting: ${JSON.stringify(data, null, 4)}`);
         }
-
 
         return await this.api.set({
             multiple: true,
             data: data
         });
-    }
-
-    private formatStatus() {
-        console.log('formatted status:', this.robovacData);
     }
 }

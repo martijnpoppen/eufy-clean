@@ -20,7 +20,7 @@ export const getProtoFile = function (proto) {
     return root.loadSync(proto);
 }
 
-export const getDecodedData = async function (proto, type, base64Value) {
+export const decode = async function (proto, type, base64Value) {
     const root = await getProtoFile(proto);
 
     const protoLookupType = root.lookupType(type);
@@ -36,6 +36,22 @@ export const getDecodedData = async function (proto, type, base64Value) {
     });
 
     return decodedObject;
+};
+
+export const encode = async function(proto, type, object) {
+    const root = await getProtoFile(proto);
+
+    const protoLookupType = root.lookupType(type);
+
+    // Create a new message from the object
+    const message = protoLookupType.create(object);
+
+
+    // Encode the message to a buffer using encodeDelimited
+    const buffer = protoLookupType.encodeDelimited(message).finish();
+
+    // Convert the buffer to a base64 string
+    return buffer.toString('base64');
 };
 
 export const getFlatData = async function (proto, type, number) {
@@ -75,8 +91,7 @@ export const getMultiData = async function (proto, type, base64Value) {
     }
 
     return values;
-
-}
+};
 
 const getKeyByValue = function(object, value) {
     return Object.keys(object).find(key => object[key] === value);

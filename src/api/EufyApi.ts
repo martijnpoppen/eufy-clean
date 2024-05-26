@@ -19,21 +19,21 @@ export class EufyApi {
     }
 
     public async login(): Promise<any> {
-        const login = await this.eufyLogin();
+        const session = await this.eufyLogin();
         const user = await this.getUserinfo();
         const mqtt = await this.getMqttCredentials();
 
-        return { login, user, mqtt };
+        return { session, user, mqtt };
     }
 
     public async sofLogin(): Promise<any> {
-        const login = await this.eufyLogin();
+        const session = await this.eufyLogin();
 
-        return { login };
+        return { session };
     }
 
     public async eufyLogin(): Promise<void> {
-        await this.requestClient({
+        return await this.requestClient({
             method: 'post',
             url: 'https://home-api.eufylife.com/v1/user/v2/email/login/',
             headers: {
@@ -58,8 +58,9 @@ export class EufyApi {
         })
             .then((res) => {
                 if (res.data.access_token) {
-                    // console.info('Login successful', res.data);
+                    console.info('eufyLogin successful');
                     this.session = res.data;
+                    return res.data;
                 } else {
                     console.error('Login failed: ' + JSON.stringify(res.data));
                     return;

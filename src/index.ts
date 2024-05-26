@@ -4,6 +4,7 @@ import { EufyLogin } from './controllers/Login';
 import { LocalConnect } from './controllers/LocalConnect';
 import { CloudConnect } from './controllers/CloudConnect';
 import { MqttConnect } from './controllers/MqttConnect';
+import { sleep } from './lib/utils';
 
 export class EufyCleanLogin {
     private eufyLogin: EufyLogin;
@@ -42,24 +43,31 @@ export class EufyCleanDevice {
     private openudid: string;
     public localConnect: LocalConnect | null = null;
     public cloudConnect: CloudConnect | null = null;
-    // public mqqtConnect: MqttConnect | null = null;
+    public mqqtConnect: MqttConnect | null = null;
 
-    constructor(deviceConfig: any, mqttCredentials?: any) {
-        console.log('EufyCleanDevice constructor');
-
+    constructor(deviceConfig: {
+        deviceId: string,
+        deviceModel: string,
+        localKey?: string,
+        username: string,
+        password: string,
+        mqtt: boolean,
+        ip?: string,
+        debug?: boolean
+    }) {
         this.openudid = crypto.randomBytes(16).toString('hex');
 
-        if ('localKey' in deviceConfig) {
+        if ('localKey' in deviceConfig && !deviceConfig.mqtt) {
             // this.localConnect = new LocalConnect(deviceConfig);
         }
 
-        if (!('localKey' in deviceConfig) && !mqttCredentials) {
+        if (!('localKey' in deviceConfig) && !deviceConfig.mqtt) {
             this.cloudConnect = new CloudConnect(deviceConfig, this.openudid);
         }
 
-        // if (mqttCredentials) {
-        //     this.mqqtConnect = new MqttConnect(mqttCredentials, deviceConfig, this.openudid);
-        // }
+        if (!('localKey' in deviceConfig) && deviceConfig.mqtt) {
+            this.mqqtConnect = new MqttConnect(deviceConfig, this.openudid);
+        }
     }
 
     public getInstance = () => {
@@ -72,9 +80,9 @@ export class EufyCleanDevice {
             return this.cloudConnect;
         }
 
-        // if (this.mqqtConnect) {
-        //     return this.mqqtConnect;
-        // }
+        if (this.mqqtConnect) {
+            return this.mqqtConnect;
+        }
 
         return null;
     }

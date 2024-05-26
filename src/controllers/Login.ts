@@ -25,36 +25,34 @@ export class EufyLogin extends Base {
     }
 
     public async init(): Promise<void> {
-        await this.login();
+        await this.login({ mqtt: true, tuya: true });
         await this.getDevices();
     }
 
-    public async login(): Promise<void> {
-        const eufyLogin = await this.eufyApi.login();
+    public async login(config: { mqtt: boolean, tuya: boolean }): Promise<void> {
+        let eufyLogin = null;
 
-        if (eufyLogin) {
-            console.log('Eufy login successful');
-
-            this.mqttCredentials = eufyLogin.mqtt;
-
-            this.tuyaApi = new TuyaCloudApi(this.username, this.password, this.eufyApi.session.user_id);
-            this.sid = await this.tuyaApi.login();
+        if (config.mqtt) {
+            eufyLogin = await this.eufyApi.login();
+        } else {
+            eufyLogin = await this.eufyApi.sofLogin();
         }
-    }
-
-    public async softLogin(): Promise<void> {
-        const eufyLogin = await this.eufyApi.sofLogin();
 
         if (eufyLogin) {
-            console.log('Eufy login successful');
+            if (config.mqtt) {
+                this.mqttCredentials = eufyLogin.mqtt;
+            }
 
-            this.tuyaApi = new TuyaCloudApi(this.username, this.password, this.eufyApi.session.user_id);
-            this.sid = await this.tuyaApi.login();
+            if (config.tuya) {
+                this.tuyaApi = new TuyaCloudApi(this.username, this.password, eufyLogin.session.user_id);
+                this.sid = await this.tuyaApi.login();
+            }
+
         }
     }
 
     public async checkLogin(): Promise<void> {
-        if(!this.sid) {
+        if (!this.sid) {
             throw new Error("Not logged in");
         }
     }
@@ -65,17 +63,24 @@ export class EufyLogin extends Base {
             this.cloudDevices = await this.tuyaApi.getDeviceList();
             this.cloudDevices = this.cloudDevices.map(device => ({
                 ...device,
+                mqtt: false,
                 apiType: this.checkApiType(device.dps)
             }));
-
-            // Devices like the X10 are not supported by the Tuya Cloud API
-            this.mqttDevices = await this.eufyApi.getDeviceList();
-
-
-            // Get all devices from the Eufy Cloud API. 
-            // Currently we don't need it, but it could be useful in the future.
-            this.eufyApiDevices = await this.eufyApi.getCloudDeviceList();
         }
+
+        // Devices like the X10 are not supported by the Tuya Cloud API
+        this.mqttDevices = await this.eufyApi.getDeviceList();
+        this.mqttDevices = this.mqttDevices.map(device => ({
+            ...device,
+            mqtt: true,
+            apiType: this.checkApiType(device.dps)
+        }));
+
+
+        // Get all devices from the Eufy Cloud API. 
+        // Currently we don't need it, but it could be useful in the future.
+        this.eufyApiDevices = await this.eufyApi.getCloudDeviceList();
+
     }
 
     public async getCloudDevice(deviceId: string): Promise<any> {
@@ -84,7 +89,7 @@ export class EufyLogin extends Base {
             return await this.tuyaApi.getDevice(deviceId);
         } catch (error) {
             throw new Error(error);
-            
+
         }
     }
 
@@ -98,9 +103,7 @@ export class EufyLogin extends Base {
     }
 
     public async getMqttDevice(deviceId: string): Promise<any> {
-        this.mqttDevices = await this.eufyApi.getDeviceList();
-
-        return this.mqttDevices.find(device => device.devId === deviceId);
+        return await this.eufyApi.getDeviceList(deviceId);
     }
 
     private checkApiType(dps) {

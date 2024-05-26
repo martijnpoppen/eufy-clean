@@ -12,9 +12,9 @@ export class Base {
     }
 
     public novelDPSMap = {
-        PLAY_PAUSE: '151',
+        PLAY_PAUSE: '152',
         DIRECTION: '155',
-        WORK_MODE: '152',
+        WORK_MODE: '153',
         WORK_STATUS: '153',
         CLEANING_PARAMETERS: '154',
         CLEANING_STATISTICS: '167',
@@ -29,4 +29,8 @@ export class Base {
     public DPSMap = this.legacyDPSMap;
 
     constructor() {}
+
+    public async connect() {
+        throw new Error('Not implemented');
+    }
 }
