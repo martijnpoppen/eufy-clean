@@ -62,6 +62,6 @@ export class TuyaCloudApi {
 
     public async sendCommand(deviceId: string, dps: any): Promise<any> {
         console.debug(`Sending command to device ${deviceId}`, { action: 'tuya.m.device.dp.publish', requiresSID: false, deviceID: deviceId, data: dps });
-        await this.tuyaCloud.request({ action: 'tuya.m.device.dp.publish', , requiresSID: false, deviceID: deviceId, data: { dps, devId: deviceId, gwId: deviceId } });
+        await this.tuyaCloud.request({ action: 'tuya.m.device.dp.publish', requiresSID: false, deviceID: deviceId, data: { dps, devId: deviceId, gwId: deviceId } });
     }
 }
