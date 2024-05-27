@@ -1,23 +1,48 @@
-export const GET_STATE = {
+export const EUFY_CLEAN_GET_STATE = {
     sleeping: 'stopped',
-    standby: 'stopped',
+    standby: 'docked',
     recharge: 'docked',
     running: 'cleaning',
     cleaning: 'cleaning',
     spot: 'spot_cleaning',
     completed: 'docked',
-    charging: 'charging'
-};
+    charging: 'charging',
+    sleep: 'stopped',
+    go_home: 'docked',
+    fault: 'stopped'
+}
 
-export const VACUUMCLEANER_STATE = {
+export const EUFY_CLEAN_VACUUMCLEANER_STATE = {
     STOPPED: 'stopped',
     CLEANING: 'cleaning',
     SPOT_CLEANING: 'spot_cleaning',
     DOCKED: 'docked',
     CHARGING: 'charging'
-};
+}
 
-export const WorkStatus = {
+
+export const EUFY_CLEAN_CLEAN_SPEED = {
+    NO_SUCTION: 'No_suction',
+    STANDARD: 'Standard',
+    QUIET: 'Quiet',
+    TURBO: 'Turbo',
+    BOOST_IQ: 'Boost_IQ',
+    MAX: 'Max'
+}
+
+export const EUFY_CLEAN_NOVEL_CLEAN_SPEED = [
+    EUFY_CLEAN_CLEAN_SPEED.QUIET,
+    EUFY_CLEAN_CLEAN_SPEED.STANDARD,
+    EUFY_CLEAN_CLEAN_SPEED.TURBO,
+    EUFY_CLEAN_CLEAN_SPEED.MAX
+]
+
+export const EUFY_CLEAN_LEGACY_CLEAN_SPEED = [
+    EUFY_CLEAN_CLEAN_SPEED.NO_SUCTION,
+    EUFY_CLEAN_CLEAN_SPEED.BOOST_IQ
+];
+
+export const EUFY_CLEAN_WORK_STATUS = {
     // Cleaning
     RUNNING: 'Running',
     // In the dock, charging
@@ -29,10 +54,18 @@ export const WorkStatus = {
     // Going home because battery is depleted
     RECHARGE_NEEDED: 'Recharge',
     // In the dock, full charged
-    COMPLETED: 'completed'
+    COMPLETED: 'Completed',
+    STANDBY: 'Standby',
+    SLEEP: 'Sleep',
+    FAULT: 'Fault',
+    FAST_MAPPING: 'Fast Mapping',
+    CLEANING: 'Cleaning',
+    REMOTE_CTRL: 'Remote Ctrl',
+    GO_HOME: 'Go Home',
+    CRUISIING: 'Cruising',
 };
 
-export const WorkMode = {
+export const EUFY_CLEAN_WORK_MODE = {
     AUTO: 'auto',
     NO_SWEEP: 'Nosweep',
     SMALL_ROOM: 'SmallRoom',
@@ -42,7 +75,34 @@ export const WorkMode = {
     SPOT: 'Spot'
 };
 
-export const ERROR_CODES = {
+export const EUFY_CLEAN_CONTROL = {
+    START_AUTO_CLEAN: 0,
+    START_SELECT_ROOMS_CLEAN: 1,
+    START_SELECT_ZONES_CLEAN: 2,
+    START_SPOT_CLEAN: 3,
+    START_GOTO_CLEAN: 4,
+    START_RC_CLEAN: 5,
+    START_GOHOME: 6,
+    START_SCHEDULE_AUTO_CLEAN: 7,
+    START_SCHEDULE_ROOMS_CLEAN: 8,
+    START_FAST_MAPPING: 9,
+    START_GOWASH: 10,
+    STOP_TASK: 12,
+    PAUSE_TASK: 13,
+    RESUME_TASK: 14,
+    STOP_GOHOME: 15,
+    STOP_RC_CLEAN: 16,
+    STOP_GOWASH: 17,
+    STOP_SMART_FOLLOW: 18,
+    START_GLOBAL_CRUISE: 20,
+    START_POINT_CRUISE: 21,
+    START_ZONES_CRUISE: 22,
+    START_SCHEDULE_CRUISE: 23,
+    START_SCENE_CLEAN: 24,
+    START_MAPPING_THEN_CLEAN: 25
+}
+
+export const EUFY_CLEAN_ERROR_CODES = {
     0: 'NONE',
     1: 'CRASH BUFFER STUCK',
     2: 'WHEEL STUCK',
@@ -97,4 +157,4 @@ export const ERROR_CODES = {
     114: 'WATER PUMP ABNORMAL',
     117: 'ULTRASONIC ABNORMAL',
     119: 'WIFI BLUETOOTH ABNORMAL'
-};
+}

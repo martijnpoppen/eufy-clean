@@ -1,4 +1,4 @@
-export const devices = {
+export const EUFY_CLEAN_DEVICES = {
     T1250: 'RoboVac 35C',
     T2103: 'RoboVac 11C',
     T2117: 'RoboVac 35C',
@@ -42,7 +42,7 @@ export const devices = {
     T2351: 'Robovac X10 Pro Omni'
 };
 
-export const X_SERIES = [
+export const EUFY_CLEAN_X_SERIES = [
    'T2262',
    'T2261',
    'T2266',
@@ -51,7 +51,7 @@ export const X_SERIES = [
    'T2351'
 ];
 
-export const G_SERIES = [
+export const EUFY_CLEAN_G_SERIES = [
    'T2210',
    'T2250',
    'T2251',
@@ -69,14 +69,14 @@ export const G_SERIES = [
    'T2277'
 ];
 
-export const L_SERIES = [
+export const EUFY_CLEAN_L_SERIES = [
    'T2190',
    'T2267',
    'T2268',
    'T2278'
 ];
 
-export const C_SERIES = [
+export const EUFY_CLEAN_C_SERIES = [
    'T1250',
    'T2117',
    'T2118',
@@ -85,6 +85,6 @@ export const C_SERIES = [
    'T2132'
 ];
 
-export const S_SERIES = [
+export const EUFY_CLEAN_S_SERIES = [
    'T2119'
 ];

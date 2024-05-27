@@ -53,7 +53,7 @@ export class EufyLogin extends Base {
 
     public async checkLogin(): Promise<void> {
         if (!this.sid) {
-            throw new Error("Not logged in");
+            await this.login({ mqtt: true, tuya: true });
         }
     }
 

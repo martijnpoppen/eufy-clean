@@ -41,7 +41,6 @@ export class MqttConnect extends SharedConnect {
             const device = await this.eufyAPi.getMqttDevice(this.deviceId);
 
             if (checkApiType) {
-                console.log(device?.dps)
                 await this.checkApiType(device?.dps);
             }
 

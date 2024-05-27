@@ -1,6 +1,6 @@
 import { Base } from "./Base";
-import { WorkMode } from "../constants/state.constants";
-import { X_SERIES } from "../constants/devices.constants";
+import { EUFY_CLEAN_WORK_MODE, EUFY_CLEAN_NOVEL_CLEAN_SPEED,  EUFY_CLEAN_CONTROL } from "../constants/state.constants";
+import { EUFY_CLEAN_X_SERIES } from "../constants/devices.constants";
 import { decode, getMultiData, encode } from '../lib/utils';
 
 export class SharedConnect extends Base {
@@ -66,11 +66,14 @@ export class SharedConnect extends Base {
 
 
     async getCleanSpeed() {
-        if (typeof this.robovacData?.CLEAN_SPEED === 'string') {
-            return this.robovacData?.CLEAN_SPEED.toLowerCase();
+        
+        if (typeof this.robovacData?.CLEAN_SPEED === 'number' || this.robovacData?.CLEAN_SPEED?.length === 1) {
+            const cleanSpeeds = Object.values(EUFY_CLEAN_NOVEL_CLEAN_SPEED)
+            return <string>cleanSpeeds[parseInt(this.robovacData.CLEAN_SPEED)].toLowerCase();
+            
         }
 
-        return <number>this.robovacData.CLEAN_SPEED;
+        return this.robovacData?.CLEAN_SPEED?.toLowerCase() || 'standard'.toLowerCase();
     }
 
 
@@ -88,9 +91,9 @@ export class SharedConnect extends Base {
                 return mode?.value?.toLowerCase() || 'AUTO'.toLowerCase();
             }
 
-            return this.robovacData.WORK_MODE.toLowerCase();
+            return this.robovacData?.WORK_MODE?.toLowerCase();
         } catch (error) {
-            return 'AUTP'.toLowerCase();
+            return 'AUTO'.toLowerCase();
         }
     }
 
@@ -101,7 +104,7 @@ export class SharedConnect extends Base {
                 return value?.state?.toLowerCase() || 'COMPLETED'.toLowerCase();
             }
 
-            return this.robovacData.WORK_STATUS;
+            return this.robovacData?.WORK_STATUS?.toLowerCase();
         } catch (error) {
             return 'COMPLETED'.toLowerCase();
         }
@@ -161,6 +164,16 @@ export class SharedConnect extends Base {
 
     async setCleanSpeed(cleanSpeed) {
         try {
+            if (this.novelApi) {
+                const setCleanSpeed = Object.values(EUFY_CLEAN_NOVEL_CLEAN_SPEED).findIndex(v => v.toLowerCase() === cleanSpeed);
+
+                console.log('Setting clean speed to: ', setCleanSpeed)
+
+                return await this.sendCommand({
+                    [this.DPSMap.CLEAN_SPEED]: setCleanSpeed
+                })
+            }
+
             console.log('Setting clean speed to: ', cleanSpeed)
             return await this.sendCommand({
                 [this.DPSMap.CLEAN_SPEED]: cleanSpeed
@@ -170,15 +183,27 @@ export class SharedConnect extends Base {
         }
     }
 
+    async autoClean() {
+        let value = true;
+
+        if (this.novelApi) {
+            value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
+                method: EUFY_CLEAN_CONTROL.START_AUTO_CLEAN,
+                autoClean: {
+                    cleanTimes: 1
+                }
+            })
+        }
+
+        return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
+    }
+
     async play() {
         let value = true;
 
         if (this.novelApi) {
             value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
-                method: 'START_AUTO_CLEAN',
-                autoClean: {
-                    cleanTimes: 1
-                }
+                method: EUFY_CLEAN_CONTROL.RESUME_TASK
             })
         }
 
@@ -190,10 +215,19 @@ export class SharedConnect extends Base {
 
         if (this.novelApi) {
             value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
-                method: 'PAUSE_TASK',
-                autoClean: {
-                    cleanTimes: 1
-                }
+                method: EUFY_CLEAN_CONTROL.PAUSE_TASK
+            })
+        }
+
+        return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
+    }
+
+    async stop() {
+        let value = false
+
+        if (this.novelApi) {
+            value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
+                method: EUFY_CLEAN_CONTROL.STOP_TASK
             })
         }
 
@@ -203,10 +237,7 @@ export class SharedConnect extends Base {
     async goHome() {
         if (this.novelApi) {
             const value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
-                method: 'START_GOHOME',
-                autoClean: {
-                    cleanTimes: 1
-                }
+                method: EUFY_CLEAN_CONTROL.START_GOHOME
             });
 
             return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
@@ -218,10 +249,7 @@ export class SharedConnect extends Base {
     async spotClean() {
         if (this.novelApi) {
             const value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
-                method: 'START_GOHOME',
-                autoClean: {
-                    cleanTimes: 1
-                }
+                method: EUFY_CLEAN_CONTROL.START_SPOT_CLEAN
             });
 
             return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
@@ -231,38 +259,20 @@ export class SharedConnect extends Base {
     async roomClean() {
         if (this.novelApi) {
             const value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
-                method: 'START_GOHOME',
-                autoClean: {
-                    cleanTimes: 1
-                }
+                method: EUFY_CLEAN_CONTROL.START_SELECT_ROOMS_CLEAN
             });
 
             return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
         }
 
 
-        if(X_SERIES.includes(this.model)) {
-            await this.sendCommand({ [this.DPSMap.WORK_MODE]:  WorkMode.SMALL_ROOM })
+        if(EUFY_CLEAN_X_SERIES.includes(this.deviceModel)) {
+            await this.sendCommand({ [this.DPSMap.WORK_MODE]:  EUFY_CLEAN_WORK_MODE.SMALL_ROOM })
             return await this.play();
         }
     
-        await this.sendCommand({ [this.DPSMap.WORK_MODE]:  WorkMode.ROOM })
+        await this.sendCommand({ [this.DPSMap.WORK_MODE]:  EUFY_CLEAN_WORK_MODE.ROOM })
         return await this.play();
-    }
-
-    async setWorkMode(workMode: 'AUTO' | 'SPOT' | 'ROOM' | 'SMALL_ROOM') {
-        switch (workMode) {
-            case 'AUTO':
-                await this.play();
-                break;
-            case 'SPOT':
-                await this.spotClean();
-            case 'ROOM':
-                await this.roomClean();
-            default:
-                await this.pause();
-                break;
-        }
     }
 
     async setCleanParam(config: { cleanType?, cleanCarpet?, cleanExtent?, mopMode?, smartModeSw?, areaCleanParam?}) {
