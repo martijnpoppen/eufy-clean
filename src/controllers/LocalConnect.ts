@@ -1,6 +1,5 @@
 // Communication with the Local Tuya API
 // This is only supported for "old" devices like the RoboVac G30
-import TuyAPI from 'tuyapi';
 import { SharedConnect } from './SharedConnect';
 
 export class LocalConnect extends SharedConnect {
@@ -20,15 +19,15 @@ export class LocalConnect extends SharedConnect {
 
         this.debugLog = config.debug || false;
 
-        this.api = new TuyAPI(
-            {
-                id: config.deviceId,
-                key: config.localKey,
-                ip: config.ip,
-                port: 6668,
-                version: '3.3'
-            }
-        );
+        // this.api = new TuyAPI(
+        //     {
+        //         id: config.deviceId,
+        //         key: config.localKey,
+        //         ip: config.ip,
+        //         port: 6668,
+        //         version: '3.3'
+        //     }
+        // );
 
         this.api.on('error', (error: any) => {
             console.error('Robovac Error', error);

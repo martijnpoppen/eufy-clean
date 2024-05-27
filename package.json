@@ -6,7 +6,9 @@
     "dev": "tsnd --respawn --files ./src",
     "clean": "rimraf build/",
     "copy-files": "copyfiles -u 1 src/**/*.proto src/**/*.js build/",
-    "build": "yarn clean && tsc && yarn copy-files",
+    "copy-build": "cp -r ./build ../../com.eufylife.home/lib/eufy-clean/build",
+    "clear-build": "rimraf ../../com.eufylife.home/lib/eufy-clean/build",
+    "build": "yarn clean && tsc && yarn copy-files && yarn clear-build && yarn copy-build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -21,10 +23,9 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
+    "@tuyapi/cloud": "^0.6.2",
     "axios": "^1.6.8",
-    "crypto": "^1.0.1",
     "mqtt": "^5.5.5",
-    "protobufjs": "^7.3.0",
-    "tuyapi": "^7.5.2"
+    "protobufjs": "^7.3.0"
   }
 }

@@ -20,7 +20,6 @@ export const EUFY_CLEAN_VACUUMCLEANER_STATE = {
     CHARGING: 'charging'
 }
 
-
 export const EUFY_CLEAN_CLEAN_SPEED = {
     NO_SUCTION: 'No_suction',
     STANDARD: 'Standard',
@@ -41,6 +40,15 @@ export const EUFY_CLEAN_LEGACY_CLEAN_SPEED = [
     EUFY_CLEAN_CLEAN_SPEED.NO_SUCTION,
     EUFY_CLEAN_CLEAN_SPEED.BOOST_IQ
 ];
+
+export const EUFY_CLEAN_GET_CLEAN_SPEED = {
+    no_suction: 'No Suction',
+    standard: 'Standard',
+    quiet: 'Quiet',
+    turbo: 'Turbo',
+    boost_iq: 'Boost IQ',
+    max: 'Max'
+}
 
 export const EUFY_CLEAN_WORK_STATUS = {
     // Cleaning

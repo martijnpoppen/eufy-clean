@@ -58,29 +58,28 @@ export class EufyLogin extends Base {
     }
 
     public async getDevices(): Promise<any> {
+        // Get all devices from the Eufy Cloud API. 
+        this.eufyApiDevices = await this.eufyApi.getCloudDeviceList();
+
         if (this.sid) {
             console.log('Login successful');
             this.cloudDevices = await this.tuyaApi.getDeviceList();
             this.cloudDevices = this.cloudDevices.map(device => ({
-                ...device,
+                ...this.findModel(device.devId),
+                apiType: this.checkApiType(device.dps),
                 mqtt: false,
-                apiType: this.checkApiType(device.dps)
+                dps: device?.dps || {}
             }));
         }
 
         // Devices like the X10 are not supported by the Tuya Cloud API
         this.mqttDevices = await this.eufyApi.getDeviceList();
         this.mqttDevices = this.mqttDevices.map(device => ({
-            ...device,
+            ...this.findModel(device.device_sn),
+            apiType: this.checkApiType(device.dps),
             mqtt: true,
-            apiType: this.checkApiType(device.dps)
+            dps: device?.dps || {}
         }));
-
-
-        // Get all devices from the Eufy Cloud API. 
-        // Currently we don't need it, but it could be useful in the future.
-        this.eufyApiDevices = await this.eufyApi.getCloudDeviceList();
-
     }
 
     public async getCloudDevice(deviceId: string): Promise<any> {
@@ -88,6 +87,7 @@ export class EufyLogin extends Base {
             await this.checkLogin();
             return await this.tuyaApi.getDevice(deviceId);
         } catch (error) {
+            this.sid = null;
             throw new Error(error);
 
         }
@@ -98,6 +98,7 @@ export class EufyLogin extends Base {
             await this.checkLogin();
             return await this.tuyaApi.sendCommand(deviceId, dps);
         } catch (error) {
+            this.sid = null;
             throw new Error(error);
         }
     }
@@ -112,5 +113,18 @@ export class EufyLogin extends Base {
         }
 
         return 'legacy'
+    }
+
+    private findModel(deviceId: string) {
+        const device = this.eufyApiDevices.find(d => d.id === deviceId);
+
+        if(device) {
+            return {
+                deviceId, 
+                deviceModel: device?.product?.product_code?.substring(0, 5),
+                deviceName: device.alias_name,
+                deviceModelName: device?.product?.name
+            }
+        }
     }
 }

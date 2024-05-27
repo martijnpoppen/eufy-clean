@@ -101,12 +101,12 @@ export class SharedConnect extends Base {
         try {
             if (this.novelApi) {
                 const value = await decode('./proto/cloud/work_status.proto', 'WorkStatus', this.robovacData.WORK_STATUS);
-                return value?.state?.toLowerCase() || 'COMPLETED'.toLowerCase();
+                return value?.state?.toLowerCase() || 'CHARGING'.toLowerCase();
             }
 
             return this.robovacData?.WORK_STATUS?.toLowerCase();
         } catch (error) {
-            return 'COMPLETED'.toLowerCase();
+            return 'CHARGING'.toLowerCase();
         }
     }
 
