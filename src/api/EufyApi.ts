@@ -138,7 +138,7 @@ export class EufyApi {
     }
 
     public async getDeviceList(device_sn?: string): Promise<any> {
-        return await this.requestClient({
+        const devices = await this.requestClient({
             method: 'post',
             maxBodyLength: Infinity,
             url: 'https://aiot-clean-api-pr.eufylife.com/app/devicerelation/get_device_list',
@@ -159,7 +159,8 @@ export class EufyApi {
             data: { attribute: 3 },
         })
             .then(async (res) => {
-                const deviceArray = []; 
+
+                const deviceArray = [];
 
                 for (const deviceObject of res.data.data.devices) {
                     deviceArray.push(deviceObject.device);
@@ -169,6 +170,8 @@ export class EufyApi {
                     return deviceArray.find((device: any) => device.device_sn === device_sn);
                 }
 
+                console.info(`Found ${deviceArray.length} devices via Eufy MQTT`);
+
                 return deviceArray;
             })
             .catch((error) => {
@@ -176,6 +179,8 @@ export class EufyApi {
                 console.error(error);
                 error.response && console.error(JSON.stringify(error.response.data));
             });
+
+        return devices;
     }
 
 

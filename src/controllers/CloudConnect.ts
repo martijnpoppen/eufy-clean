@@ -4,27 +4,26 @@ import { SharedConnect } from './SharedConnect';
 export class CloudConnect extends SharedConnect {
     private autoUpdate: number;
 
-    private eufyAPi: EufyLogin;
+    private eufyCleanApi: EufyLogin;
 
-    constructor(config: { username: string, password: string, deviceId: string, deviceModel?: string, autoUpdate?: number, debug?: boolean }, openudid: string) {
+    constructor(config: { deviceId: string, deviceModel?: string, autoUpdate?: number, debug?: boolean }, eufyCleanApi: EufyLogin) {
         super(config);
 
-        this.eufyAPi = new EufyLogin(config.username, config.password, openudid);
         this.deviceId = config.deviceId;
         this.deviceModel = config.deviceModel || '';
 
         this.autoUpdate = config.autoUpdate || 0;
         this.debugLog = config.debug || false;
+        this.eufyCleanApi = eufyCleanApi;
     }
 
     async connect() {
-        await this.eufyAPi.login({ mqtt: false, tuya: true });
         await this.updateDevice(true);
     }
 
     async updateDevice(checkApiType = false) {
         try {
-            const device = await this.eufyAPi.getCloudDevice(this.deviceId);
+            const device = await this.eufyCleanApi.getCloudDevice(this.deviceId);
 
             if (checkApiType) {
                 await this.checkApiType(device?.dps);
@@ -42,7 +41,7 @@ export class CloudConnect extends SharedConnect {
 
     async sendCommand(data: { [key: string]: string | number | boolean; }): Promise<void> {
         try {
-            await this.eufyAPi.sendCloudCommand(this.deviceId, data);
+            await this.eufyCleanApi.sendCloudCommand(this.deviceId, data);
         } catch (error) {
             console.log(error)
         }

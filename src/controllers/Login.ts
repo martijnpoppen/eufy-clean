@@ -26,7 +26,7 @@ export class EufyLogin extends Base {
 
     public async init(): Promise<void> {
         await this.login({ mqtt: true, tuya: true });
-        await this.getDevices();
+        return await this.getDevices();
     }
 
     public async login(config: { mqtt: boolean, tuya: boolean }): Promise<void> {
@@ -46,6 +46,7 @@ export class EufyLogin extends Base {
             if (config.tuya) {
                 this.tuyaApi = new TuyaCloudApi(this.username, this.password, eufyLogin.session.user_id);
                 this.sid = await this.tuyaApi.login();
+                console.log('TuyaCloudApi login successful');
             }
 
         }
@@ -58,11 +59,10 @@ export class EufyLogin extends Base {
     }
 
     public async getDevices(): Promise<any> {
-        // Get all devices from the Eufy Cloud API. 
+        // // Get all devices from the Eufy Cloud API. 
         this.eufyApiDevices = await this.eufyApi.getCloudDeviceList();
 
         if (this.sid) {
-            console.log('Login successful');
             this.cloudDevices = await this.tuyaApi.getDeviceList();
             this.cloudDevices = this.cloudDevices.map(device => ({
                 ...this.findModel(device.devId),

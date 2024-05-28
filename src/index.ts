@@ -6,8 +6,8 @@ import { CloudConnect } from './controllers/CloudConnect';
 import { MqttConnect } from './controllers/MqttConnect';
 import { sleep } from './lib/utils';
 
-export class EufyCleanLogin {
-    private eufyLogin: EufyLogin;
+export class EufyClean {
+    private eufyCleanApi: EufyLogin;
     private openudid: string;
 
     private username: string;
@@ -23,68 +23,48 @@ export class EufyCleanLogin {
     }
 
     // Use this method to login and pair new devices.
-    public async login(): Promise<any> {
+    public async init(): Promise<any> {
         console.log('EufyClean init');
 
-        this.eufyLogin = new EufyLogin(this.username, this.password, this.openudid);
+        this.eufyCleanApi = new EufyLogin(this.username, this.password, this.openudid);
 
-        await this.eufyLogin.init();
+        await this.eufyCleanApi.init();
 
         return {
-            cloudDevices: this.eufyLogin.cloudDevices,
-            mqttDevices: this.eufyLogin.mqttDevices,
-            mqttCredentials: this.eufyLogin.mqttCredentials,
-            openudid: this.openudid
+            cloudDevices: this.eufyCleanApi.cloudDevices,
+            mqttDevices: this.eufyCleanApi.mqttDevices
         };
     }
-}
 
-export class EufyCleanDevice {
-    private openudid: string;
-    public localConnect: LocalConnect | null = null;
-    public cloudConnect: CloudConnect | null = null;
-    public mqqtConnect: MqttConnect | null = null;
+    public async getCloudDevices() {
+        return this.eufyCleanApi.cloudDevices;
+    }
 
-    constructor(deviceConfig: {
-        deviceId: string,
-        deviceModel: string,
-        localKey?: string,
-        username: string,
-        password: string,
-        mqtt: boolean,
-        ip?: string,
-        debug?: boolean
-    }) {
-        this.openudid = crypto.randomBytes(16).toString('hex');
+    public async getMqttDevices() {
+        return this.eufyCleanApi.mqttDevices;
+    }
 
-        if ('localKey' in deviceConfig && !deviceConfig.mqtt) {
+    public async getAllDevices() {
+        return [...this.eufyCleanApi.cloudDevices, ...this.eufyCleanApi.mqttDevices]
+    }
+
+    public async initDevice(deviceConfig: {deviceId: string, localKey?: string, autoUpdate?: boolean, debug?: boolean}): Promise<CloudConnect | MqttConnect> {
+        const devices = await this.getAllDevices();
+        const device = devices.find(d => d.deviceId === deviceConfig.deviceId);
+
+        if ('localKey' in deviceConfig && !device.mqtt) {
             // this.localConnect = new LocalConnect(deviceConfig);
         }
 
-        if (!('localKey' in deviceConfig) && !deviceConfig.mqtt) {
-            this.cloudConnect = new CloudConnect(deviceConfig, this.openudid);
+        if (!('localKey' in deviceConfig) && !device.mqtt) {
+            const cloudConnect = new CloudConnect(device, this.eufyCleanApi);
+            return cloudConnect;
         }
 
-        if (!('localKey' in deviceConfig) && deviceConfig.mqtt) {
-            this.mqqtConnect = new MqttConnect(deviceConfig, this.openudid);
+        if (!('localKey' in deviceConfig) && device.mqtt) {
+            const mqttConnect =  new MqttConnect(device, this.openudid, this.eufyCleanApi);
+            return mqttConnect
         }
-    }
-
-    public getInstance = () => {
-        // Legacy, local connection
-        if (this.localConnect) {
-            return this.localConnect;
-        }
-
-        if (this.cloudConnect) {
-            return this.cloudConnect;
-        }
-
-        if (this.mqqtConnect) {
-            return this.mqqtConnect;
-        }
-
-        return null;
     }
 }
 

@@ -9,26 +9,24 @@ export class MqttConnect extends SharedConnect {
     private mqttClient: any;
     private mqttCredentials: any;
     private openudid: string;
+    private eufyCleanApi: EufyLogin;
 
-    private eufyAPi: EufyLogin;
-
-    constructor(config: { username: string, password: string, deviceId: string, deviceModel: string, debug?: boolean }, openudid: string) {
+    constructor(config: { deviceId: string, deviceModel: string, debug?: boolean }, openudid: string, eufyCleanApi: EufyLogin) {
         super(config);
 
         this.deviceId = config.deviceId;
         this.deviceModel = config.deviceModel
 
-        this.eufyAPi = new EufyLogin(config.username, config.password, openudid);
-
         this.debugLog = config.debug || false;
 
         this.openudid = openudid;
+        this.eufyCleanApi = eufyCleanApi;
     }
 
     async connect() {
-        await this.eufyAPi.login({ mqtt: true, tuya: false });
+        await this.eufyCleanApi.login({ mqtt: true, tuya: false });
 
-        await this.connectMqtt(this.eufyAPi.mqttCredentials);
+        await this.connectMqtt(this.eufyCleanApi.mqttCredentials);
         await this.updateDevice(true);
         await sleep(2000); // Make sure the device is ready
     }
@@ -38,7 +36,7 @@ export class MqttConnect extends SharedConnect {
         try {
             if (!checkApiType) return;
 
-            const device = await this.eufyAPi.getMqttDevice(this.deviceId);
+            const device = await this.eufyCleanApi.getMqttDevice(this.deviceId);
 
             if (checkApiType) {
                 await this.checkApiType(device?.dps);
