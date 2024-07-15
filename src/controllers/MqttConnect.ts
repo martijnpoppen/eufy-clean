@@ -55,7 +55,11 @@ export class MqttConnect extends SharedConnect {
 
             this.mqttCredentials = mqttCredentials;
 
-            console.info('Setup MQTT Connection');
+            console.info('Setup MQTT Connection', {
+                clientId: `android-${this.mqttCredentials.app_name}-eufy_android_${this.openudid}_${this.mqttCredentials.user_id
+                    }-${Date.now()}`,
+                username: this.mqttCredentials.thing_name
+            });
 
             if (this.mqttClient) {
                 this.mqttClient.end();
@@ -108,7 +112,7 @@ export class MqttConnect extends SharedConnect {
     async sendCommand(dataPayload) {
         try {
             const payload = JSON.stringify({
-                account_id: 'bbd7b4f5b4e0766a84ddd497f5adbfa2fcc7c0e2',
+                account_id: this.mqttCredentials.user_id,
                 data: dataPayload,
                 device_sn: this.deviceId,
                 protocol: 2,
@@ -131,6 +135,8 @@ export class MqttConnect extends SharedConnect {
             }
 
             if (this.debugLog) console.debug(JSON.stringify(mqqtVal));
+
+            console.debug(`Sending command to device ${this.deviceId}`, payload);
 
             this.mqttClient.publish(`cmd/eufy_home/${this.deviceModel}/${this.deviceId}/req`, JSON.stringify(mqqtVal));
         } catch (error) {

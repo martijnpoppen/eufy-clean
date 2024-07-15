@@ -44,11 +44,14 @@ export class EufyLogin extends Base {
             }
 
             if (config.tuya) {
-                this.tuyaApi = new TuyaCloudApi(this.username, this.password, eufyLogin.session.user_id);
-                this.sid = await this.tuyaApi.login();
-                console.log('TuyaCloudApi login successful');
+                try {
+                    this.tuyaApi = new TuyaCloudApi(this.username, this.password, eufyLogin.session.user_id);
+                    this.sid = await this.tuyaApi.login();
+                    console.log('TuyaCloudApi login successful');
+                } catch (error) {
+                    console.error('TuyaCloudApi login failed');
+                }
             }
-
         }
     }
 
@@ -80,6 +83,8 @@ export class EufyLogin extends Base {
             mqtt: true,
             dps: device?.dps || {}
         }));
+
+        this.mqttDevices = this.mqttDevices.filter(device => !device.invalid);
     }
 
     public async getCloudDevice(deviceId: string): Promise<any> {
@@ -118,13 +123,16 @@ export class EufyLogin extends Base {
     private findModel(deviceId: string) {
         const device = this.eufyApiDevices.find(d => d.id === deviceId);
 
-        if(device) {
+        if (device) {
             return {
-                deviceId, 
+                deviceId,
                 deviceModel: device?.product?.product_code?.substring(0, 5),
                 deviceName: device.alias_name,
-                deviceModelName: device?.product?.name
+                deviceModelName: device?.product?.name,
+                invalid: false
             }
         }
+
+        return { deviceId, deviceModel: '', deviceName: '', deviceModelName: '', invalid: true }
     }
 }

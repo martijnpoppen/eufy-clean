@@ -1,7 +1,7 @@
 import { Base } from "./Base";
-import { EUFY_CLEAN_WORK_MODE, EUFY_CLEAN_NOVEL_CLEAN_SPEED,  EUFY_CLEAN_CONTROL } from "../constants/state.constants";
+import { EUFY_CLEAN_WORK_MODE, EUFY_CLEAN_NOVEL_CLEAN_SPEED, EUFY_CLEAN_CONTROL } from "../constants/state.constants";
 import { EUFY_CLEAN_X_SERIES } from "../constants/devices.constants";
-import { decode, getMultiData, encode } from '../lib/utils';
+import { decode, getMultiData, getProtoFile, encode } from '../lib/utils';
 
 export class SharedConnect extends Base {
     public novelApi: boolean = false;
@@ -48,6 +48,8 @@ export class SharedConnect extends Base {
         }
 
         if (this.debugLog) console.debug('mappedData', this.robovacData);
+
+        this.getControlResponse();
     }
 
     public async updateDevice() {
@@ -66,14 +68,27 @@ export class SharedConnect extends Base {
 
 
     async getCleanSpeed() {
-        
         if (typeof this.robovacData?.CLEAN_SPEED === 'number' || this.robovacData?.CLEAN_SPEED?.length === 1) {
             const cleanSpeeds = Object.values(EUFY_CLEAN_NOVEL_CLEAN_SPEED)
             return <string>cleanSpeeds[parseInt(this.robovacData.CLEAN_SPEED)].toLowerCase();
-            
+
         }
 
         return this.robovacData?.CLEAN_SPEED?.toLowerCase() || 'standard'.toLowerCase();
+    }
+
+    async getControlResponse() {
+        try {
+            if (this.novelApi) {
+                const value = await decode('./proto/cloud/control.proto', 'ModeCtrlResponse', this.robovacData.PLAY_PAUSE);
+                console.log('152 - control response', value)
+                return value || {};
+            }
+
+            return null;
+        } catch (error) {
+            return {};
+        }
     }
 
 
@@ -188,9 +203,23 @@ export class SharedConnect extends Base {
 
         if (this.novelApi) {
             value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
-                method: EUFY_CLEAN_CONTROL.START_AUTO_CLEAN,
                 autoClean: {
                     cleanTimes: 1
+                }
+            })
+        }
+
+        return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
+    }
+
+    async sceneClean(id) {
+        let value = true;
+
+        if (this.novelApi) {
+            value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
+                method: EUFY_CLEAN_CONTROL.START_SCENE_CLEAN,
+                sceneClean: {
+                    sceneId: id
                 }
             })
         }
@@ -266,27 +295,65 @@ export class SharedConnect extends Base {
         }
 
 
-        if(EUFY_CLEAN_X_SERIES.includes(this.deviceModel)) {
-            await this.sendCommand({ [this.DPSMap.WORK_MODE]:  EUFY_CLEAN_WORK_MODE.SMALL_ROOM })
+        if (EUFY_CLEAN_X_SERIES.includes(this.deviceModel)) {
+            await this.sendCommand({ [this.DPSMap.WORK_MODE]: EUFY_CLEAN_WORK_MODE.SMALL_ROOM })
             return await this.play();
         }
-    
-        await this.sendCommand({ [this.DPSMap.WORK_MODE]:  EUFY_CLEAN_WORK_MODE.ROOM })
+
+        await this.sendCommand({ [this.DPSMap.WORK_MODE]: EUFY_CLEAN_WORK_MODE.ROOM })
         return await this.play();
     }
 
-    async setCleanParam(config: { cleanType?, cleanCarpet?, cleanExtent?, mopMode?, smartModeSw?, areaCleanParam?}) {
-        // const currentParams = 
+    async setCleanParam(config: { cleanType?: 'SWEEP_AND_MOP' | 'SWEEP_ONLY' | 'MOP_ONLY', mopMode?: 'HIGH' | 'MEDIUM' | 'LOW', cleanExtent?: 'NORMAL' | 'NARROW' | 'QUICK' }) {
+
+        if (!this.novelApi) return;
+
+        const cleanParamProto = await getProtoFile('proto/cloud/clean_param.proto');
+        const cleanParams = {
+            cleanType: cleanParamProto.lookupType('CleanType')?.Value,
+            cleanExtent: cleanParamProto.lookupType('CleanExtent')?.Value,
+            mopMode: cleanParamProto.lookupType('MopMode')?.Level,
+        }
+
+        const isMop = config.cleanType === 'SWEEP_AND_MOP' || config.cleanType === 'MOP_ONLY';
+
         const requestParams = {
             cleanParam: {
-                cleanType: { value: 1 },
-                cleanCarpet: {},
-                cleanExtent: {},
-                mopMode: { level: 1 },
-                smartModeSw: { value: false }
-            },
-            areaCleanParam: {}
+                ...(config.cleanType ? { cleanType: { value: cleanParams.cleanType[config.cleanType] } } : { cleanType: {} }),
+                ...(config.cleanExtent ? { cleanExtent: { value: cleanParams.cleanExtent[config.cleanExtent] } } : { cleanExtent: {} }),
+                ...(config.mopMode && isMop ? { mopMode: { level: cleanParams.mopMode[config.mopMode] } } : { mopMode: {} }),
+                smartModeSw: {},
+                cleanTimes: 1
+            }
         }
+
+        // {
+        //     cleanParam: {
+        //       cleanType: { value: 'MOP_ONLY' },
+        //       cleanCarpet: {},
+        //       cleanExtent: { value: 'NARROW' },
+        //       mopMode: { level: 'MIDDLE' },
+        //       smartModeSw: {},
+        //       cleanTimes: 1
+        //     },
+        //     areaCleanParam: {}
+        //   }
+
+        // cleanParam: {
+        //     cleanType: { value: 'SWEEP_AND_MOP' },
+        //     cleanCarpet: {},
+        //     cleanExtent: {},
+        //     mopMode: {},
+        //     smartModeSw: {},
+        //     cleanTimes: 1
+        //   },
+
+
+        console.log('setCleanParam - requestParams', requestParams)
+
+        const value = await encode('proto/cloud/clean_param.proto', 'CleanParamRequest', requestParams);
+
+        await this.sendCommand({ [this.DPSMap.CLEANING_PARAMETERS]: value })
     }
 
     public formatStatus() {

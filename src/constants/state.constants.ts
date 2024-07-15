@@ -61,6 +61,7 @@ export const EUFY_CLEAN_WORK_STATUS = {
     SLEEPING: 'Sleeping',
     // Going home because battery is depleted
     RECHARGE_NEEDED: 'Recharge',
+    RECHARGE: 'Recharge',
     // In the dock, full charged
     COMPLETED: 'Completed',
     STANDBY: 'Standby',

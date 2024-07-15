@@ -39,7 +39,8 @@ export const EUFY_CLEAN_DEVICES = {
     T2277: 'Robovac L60 SES',
     T2278: 'Robovac L60 Hybrid SES',
     T2320: 'Robovac X9 Pro',
-    T2351: 'Robovac X10 Pro Omni'
+    T2351: 'Robovac X10 Pro Omni',
+    T2080: 'Robovac S1'
 };
 
 export const EUFY_CLEAN_X_SERIES = [
@@ -82,9 +83,11 @@ export const EUFY_CLEAN_C_SERIES = [
    'T2118',
    'T2128',
    'T2130',
-   'T2132'
+   'T2132',
+   'T2120'
 ];
 
 export const EUFY_CLEAN_S_SERIES = [
-   'T2119'
+   'T2119',
+   'T2080'
 ];

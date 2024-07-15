@@ -35,7 +35,7 @@ export class EufyApi {
     public async eufyLogin(): Promise<void> {
         return await this.requestClient({
             method: 'post',
-            url: 'https://home-api.eufylife.com/v1/user/v2/email/login/',
+            url: 'https://home-api.eufylife.com/v1/user/email/login',
             headers: {
                 category: 'Home',
                 Accept: '*/*',
@@ -57,7 +57,7 @@ export class EufyApi {
             },
         })
             .then((res) => {
-                if (res.data.access_token) {
+                if (res.data && res.data.access_token) {
                     console.info('eufyLogin successful');
                     this.session = res.data;
                     return res.data;
@@ -162,12 +162,14 @@ export class EufyApi {
 
                 const deviceArray = [];
 
-                for (const deviceObject of res.data.data.devices) {
-                    deviceArray.push(deviceObject.device);
-                }
+                if(res.data && res.data.data && res.data.data.devices) {
+                    for (const deviceObject of res.data.data.devices) {
+                        deviceArray.push(deviceObject.device);
+                    }
 
-                if (device_sn?.length) {
-                    return deviceArray.find((device: any) => device.device_sn === device_sn);
+                    if (device_sn?.length) {
+                        return deviceArray.find((device: any) => device.device_sn === device_sn);
+                    }
                 }
 
                 console.info(`Found ${deviceArray.length} devices via Eufy MQTT`);

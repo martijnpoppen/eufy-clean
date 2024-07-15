@@ -95,4 +95,4 @@ export const getMultiData = async function (proto, type, base64Value) {
 
 const getKeyByValue = function(object, value) {
     return Object.keys(object).find(key => object[key] === value);
-  }
+}

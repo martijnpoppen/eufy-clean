@@ -48,9 +48,13 @@ export class EufyClean {
         return [...this.eufyCleanApi.cloudDevices, ...this.eufyCleanApi.mqttDevices]
     }
 
-    public async initDevice(deviceConfig: {deviceId: string, localKey?: string, autoUpdate?: boolean, debug?: boolean}): Promise<CloudConnect | MqttConnect> {
+    public async initDevice(deviceConfig: {deviceId: string, localKey?: string, autoUpdate?: boolean, debug?: boolean}): Promise<CloudConnect | MqttConnect | null> {
         const devices = await this.getAllDevices();
         const device = devices.find(d => d.deviceId === deviceConfig.deviceId);
+
+        if(!device) {
+            return null; 
+        }
 
         if ('localKey' in deviceConfig && !device.mqtt) {
             // this.localConnect = new LocalConnect(deviceConfig);
@@ -69,9 +73,3 @@ export class EufyClean {
 }
 
 export * from './constants';
-
-async function main() {
-
-}
-
-main();
