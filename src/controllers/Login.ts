@@ -126,8 +126,8 @@ export class EufyLogin extends Base {
         if (device) {
             return {
                 deviceId,
-                deviceModel: device?.product?.product_code?.substring(0, 5),
-                deviceName: device.alias_name,
+                deviceModel: device?.product?.product_code?.substring(0, 5) || device?.device_model.substring(0, 5),
+                deviceName: device.alias_name || device.device_name || device.name,
                 deviceModelName: device?.product?.name,
                 invalid: false
             }

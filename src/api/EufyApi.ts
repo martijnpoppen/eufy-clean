@@ -125,8 +125,14 @@ export class EufyApi {
             },
         })
             .then(async (res) => {
-                console.info(`Found ${res.data.devices.length} devices via Eufy Cloud`);
-                return res.data.devices;
+                let data = res.data;
+
+                if (res.data.data) {
+                  data = res.data.data;
+                }
+                
+                console.info(`Found ${data.devices.length} devices via Eufy Cloud`);
+                return data.devices;
             })
             .catch((error) => {
                 console.error('get device list failed');
@@ -151,7 +157,6 @@ export class EufyApi {
                 'os-version': 'Android',
                 'model-type': 'PHONE',
                 'app-name': 'eufy_home',
-
                 'x-auth-token': this.userInfo.user_center_token,
                 gtoken: this.userInfo.gtoken,
                 'content-type': 'application/json; charset=UTF-8',
@@ -162,8 +167,14 @@ export class EufyApi {
 
                 const deviceArray = [];
 
-                if(res.data && res.data.data && res.data.data.devices) {
-                    for (const deviceObject of res.data.data.devices) {
+                let data = res.data;
+
+                if (res.data.data) {
+                  data = res.data.data;
+                }
+                
+                if(data.devices) {
+                    for (const deviceObject of data.devices) {
                         deviceArray.push(deviceObject.device);
                     }
 

@@ -16,6 +16,7 @@ export class MqttConnect extends SharedConnect {
 
         this.deviceId = config.deviceId;
         this.deviceModel = config.deviceModel
+        this.config = config;
 
         this.debugLog = config.debug || false;
 
@@ -82,6 +83,7 @@ export class MqttConnect extends SharedConnect {
             console.info('Connected to MQTT');
             console.debug(`Subscribe to cmd/eufy_home/${this.deviceModel}/${this.deviceId}/res`);
             this.mqttClient && this.mqttClient.subscribe(`cmd/eufy_home/${this.deviceModel}/${this.deviceId}/res`);
+            //this.mqttClient && this.mqttClient.subscribe(`smart/mb/in/${this.deviceId}`);
         });
 
         this.mqttClient.on('message', async (topic, message) => {
@@ -139,6 +141,7 @@ export class MqttConnect extends SharedConnect {
             console.debug(`Sending command to device ${this.deviceId}`, payload);
 
             this.mqttClient.publish(`cmd/eufy_home/${this.deviceModel}/${this.deviceId}/req`, JSON.stringify(mqqtVal));
+            // this.mqttClient.publish(`smart/mb/out/${this.deviceId}`);
         } catch (error) {
             console.error(error)
         }

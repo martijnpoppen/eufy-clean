@@ -11,6 +11,7 @@ export class CloudConnect extends SharedConnect {
 
         this.deviceId = config.deviceId;
         this.deviceModel = config.deviceModel || '';
+        this.config = config;
 
         this.autoUpdate = config.autoUpdate || 0;
         this.debugLog = config.debug || false;

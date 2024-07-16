@@ -9,6 +9,7 @@ export class SharedConnect extends Base {
     public debugLog: boolean;
     public deviceId: string;
     public deviceModel: string;
+    public config = {};
 
     constructor(config: { deviceId: string, deviceModel?: string, debug?: boolean }) {
         super();
