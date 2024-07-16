@@ -31,8 +31,8 @@ export class TuyaCloudApi {
                 returnFullLoginResponse: 'false',
             })
             .catch((error: any) => {
-                console.error(error);
-                console.error('Login failed');
+                console.debug(error);
+                console.debug('Login failed');
             });
     }
 

@@ -1,5 +1,7 @@
 // Communication with the Local Tuya API
 // This is only supported for "old" devices like the RoboVac G30
+
+// As of july 2024 this is not used in the main codebase, but it's here for reference
 import { SharedConnect } from './SharedConnect';
 
 export class LocalConnect extends SharedConnect {

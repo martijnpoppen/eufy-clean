@@ -212,14 +212,17 @@ export class SharedConnect extends Base {
         return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
     }
 
-    async sceneClean(id) {
+    async sceneClean(id: number) {
+        await this.stop(); 
+
         let value = true;
+        let increment = 3; // Scene 1 is 4, Scene 2 is 5, Scene 3 is 6 etc.
 
         if (this.novelApi) {
             value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
                 method: EUFY_CLEAN_CONTROL.START_SCENE_CLEAN,
                 sceneClean: {
-                    sceneId: id
+                    sceneId: id + increment
                 }
             })
         }
@@ -305,7 +308,6 @@ export class SharedConnect extends Base {
     }
 
     async setCleanParam(config: { cleanType?: 'SWEEP_AND_MOP' | 'SWEEP_ONLY' | 'MOP_ONLY', mopMode?: 'HIGH' | 'MEDIUM' | 'LOW', cleanExtent?: 'NORMAL' | 'NARROW' | 'QUICK' }) {
-
         if (!this.novelApi) return;
 
         const cleanParamProto = await getProtoFile('proto/cloud/clean_param.proto');
@@ -326,28 +328,6 @@ export class SharedConnect extends Base {
                 cleanTimes: 1
             }
         }
-
-        // {
-        //     cleanParam: {
-        //       cleanType: { value: 'MOP_ONLY' },
-        //       cleanCarpet: {},
-        //       cleanExtent: { value: 'NARROW' },
-        //       mopMode: { level: 'MIDDLE' },
-        //       smartModeSw: {},
-        //       cleanTimes: 1
-        //     },
-        //     areaCleanParam: {}
-        //   }
-
-        // cleanParam: {
-        //     cleanType: { value: 'SWEEP_AND_MOP' },
-        //     cleanCarpet: {},
-        //     cleanExtent: {},
-        //     mopMode: {},
-        //     smartModeSw: {},
-        //     cleanTimes: 1
-        //   },
-
 
         console.log('setCleanParam - requestParams', requestParams)
 

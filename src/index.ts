@@ -57,6 +57,7 @@ export class EufyClean {
         }
 
         if ('localKey' in deviceConfig && !device.mqtt) {
+            console.log('LocalConnect is deprecated, use CloudConnect instead');
             // this.localConnect = new LocalConnect(deviceConfig);
         }
 
