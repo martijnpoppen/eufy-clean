@@ -6,10 +6,12 @@ export class TuyaCloudApi {
     private password: string;
     private userId: string;
 
-    constructor(username: string, password: string, userId: string) {
+    constructor(username: string, password: string, userId: string, region: string) {
         this.username = username;
         this.password = password;
         this.userId = userId;
+
+        console.log('TuyaCloudApi', {  region });
 
         this.tuyaCloud = new TuyaCloud({
             key: 'yx5v9uc3ef9wg3v9atje',
@@ -17,7 +19,7 @@ export class TuyaCloudApi {
             secret2: 'cepev5pfnhua4dkqkdpmnrdxx378mpjr',
             certSign: 'A',
             apiEtVersion: '0.0.1',
-            region: 'EU',
+            region,
             ttid: 'android',
         });
     }
@@ -30,10 +32,6 @@ export class TuyaCloudApi {
                 uid: this.userId,
                 returnFullLoginResponse: 'false',
             })
-            .catch((error: any) => {
-                console.debug(error);
-                console.debug('Login failed');
-            });
     }
 
     public async getDeviceList(): Promise<any> {

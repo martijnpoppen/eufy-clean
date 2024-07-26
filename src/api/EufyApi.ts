@@ -59,7 +59,9 @@ export class EufyApi {
             .then((res) => {
                 if (res.data && res.data.access_token) {
                     console.info('eufyLogin successful');
+
                     this.session = res.data;
+
                     return res.data;
                 } else {
                     console.error('Login failed: ' + JSON.stringify(res.data));
@@ -128,9 +130,9 @@ export class EufyApi {
                 let data = res.data;
 
                 if (res.data.data) {
-                  data = res.data.data;
+                    data = res.data.data;
                 }
-                
+
                 console.info(`Found ${data.devices.length} devices via Eufy Cloud`);
                 return data.devices;
             })
@@ -170,10 +172,10 @@ export class EufyApi {
                 let data = res.data;
 
                 if (res.data.data) {
-                  data = res.data.data;
+                    data = res.data.data;
                 }
-                
-                if(data.devices) {
+
+                if (data.devices) {
                     for (const deviceObject of data.devices) {
                         deviceArray.push(deviceObject.device);
                     }

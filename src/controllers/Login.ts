@@ -45,11 +45,21 @@ export class EufyLogin extends Base {
 
             if (config.tuya) {
                 try {
-                    this.tuyaApi = new TuyaCloudApi(this.username, this.password, eufyLogin.session.user_id);
+                    this.tuyaApi = new TuyaCloudApi(this.username, this.password, eufyLogin.session.user_id, 'EU');
                     this.sid = await this.tuyaApi.login();
-                    console.log('TuyaCloudApi login successful');
+                    console.log('TuyaCloudApi EU login successful');
                 } catch (error) {
-                    console.error('TuyaCloudApi login failed');
+                    console.error('TuyaCloudApi EU login failed');
+                    console.error(error)
+
+                    try {
+                        this.tuyaApi = new TuyaCloudApi(this.username, this.password, eufyLogin.session.user_id, 'US');
+                        this.sid = await this.tuyaApi.login();
+                        console.log('TuyaCloudApi US login successful');
+                    } catch (error) {
+                        console.error('TuyaCloudApi US login failed');
+                        console.error(error)
+                    }
                 }
             }
         }
