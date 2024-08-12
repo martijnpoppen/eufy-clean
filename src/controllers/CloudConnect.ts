@@ -31,10 +31,6 @@ export class CloudConnect extends SharedConnect {
             }
 
             await this.mapData(device?.dps)
-
-            if (this.autoUpdate > 0) {
-                this.recursiveUpdate(this.autoUpdate);
-            }
         } catch (error) {
             console.log(error)
         }

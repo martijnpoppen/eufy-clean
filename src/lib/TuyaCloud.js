@@ -390,7 +390,7 @@ TuyaCloud.prototype.loginEx = async function (options) {
   const apiResult = await this.request({
     action: 'tuya.m.user.uid.password.login',
     data: {
-      countryCode: '49',
+      countryCode: this.region,
       uid: 'eh-' + options.uid,
       createGroup: true,
       passwd: encryptedPass,

@@ -53,16 +53,6 @@ export class SharedConnect extends Base {
         this.getControlResponse();
     }
 
-    public async updateDevice() {
-        throw new Error('Method not implemented.');
-    }
-
-    async recursiveUpdate(time) {
-        setTimeout(async () => {
-            await this.updateDevice();
-        }, time);
-    }
-
     public async getRobovacData() {
         return this.robovacData;
     }
@@ -183,7 +173,7 @@ export class SharedConnect extends Base {
             if (this.novelApi) {
                 const setCleanSpeed = Object.values(EUFY_CLEAN_NOVEL_CLEAN_SPEED).findIndex(v => v.toLowerCase() === cleanSpeed);
 
-                console.log('Setting clean speed to: ', setCleanSpeed)
+                console.log('Setting clean speed to: ', setCleanSpeed, Object.values(EUFY_CLEAN_NOVEL_CLEAN_SPEED), cleanSpeed)
 
                 return await this.sendCommand({
                     [this.DPSMap.CLEAN_SPEED]: setCleanSpeed

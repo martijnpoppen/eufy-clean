@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@tuyapi/cloud": "^0.6.2",
+    "tuyapi": "github:codetheweb/tuyapi",
     "axios": "^1.6.8",
     "mqtt": "^5.5.5",
     "protobufjs": "^7.3.0"
