@@ -93,7 +93,7 @@ export class LocalConnect extends SharedConnect {
 
     async updateDevice() {
         try {
-            await this.api.refresh({ schema: true });
+            await this.api?.refresh({ schema: true });
         } catch (error) {
             console.log(error)
         }
