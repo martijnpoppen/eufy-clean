@@ -14,7 +14,7 @@ export class EufyClean {
     private password: string;
 
     // if the deviceconfig and mqttCredentials are provided the connection will be automatically setup
-    constructor(username: string, password: string) {
+    constructor(username?: string, password?: string) {
         console.log('EufyClean constructor');
 
         this.username = username;
@@ -49,7 +49,7 @@ export class EufyClean {
     }
 
     public async initDevice(deviceConfig: { deviceId: string, localKey?: string, ip?: string, autoUpdate?: boolean, debug?: boolean }): Promise<CloudConnect | MqttConnect | LocalConnect | null> {
-        if ('localKey' in deviceConfig && 'ip' in deviceConfig) {
+        if ('localKey' in deviceConfig && 'ip' in deviceConfig && deviceConfig.localKey) {
             console.log('LocalConnect is deprecated, use CloudConnect instead');
             return new LocalConnect(deviceConfig);
         }

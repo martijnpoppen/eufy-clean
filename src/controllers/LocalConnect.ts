@@ -2,6 +2,7 @@
 // This is only supported for "old" devices like the RoboVac G30
 
 // As of july 2024 this is not used in the main codebase, but it's here for reference
+import { sleep } from '../lib/utils';
 import { SharedConnect } from './SharedConnect';
 import TuyAPI from 'tuyapi';
 
@@ -18,8 +19,6 @@ export class LocalConnect extends SharedConnect {
         this.config = config;
         this.debugLog = config.debug || false;
         this.didCheckApiType = false;
-
-        this.setupApi(config)
     }
 
     async setupApi(config) {
@@ -67,6 +66,9 @@ export class LocalConnect extends SharedConnect {
 
     async connect() {
         if (!this.connected) {
+            await this.setupApi(this.config);
+            await sleep(2000);
+
             console.log('Connecting...');
 
             await this.api.connect().catch(error => {
@@ -87,6 +89,14 @@ export class LocalConnect extends SharedConnect {
     async disconnect() {
         console.log('Disconnecting...');
         await this.api.disconnect();
+    }
+
+    async updateDevice() {
+        try {
+            await this.api.refresh({ schema: true });
+        } catch (error) {
+            console.log(error)
+        }
     }
 
     async sendCommand(data: { [key: string]: string | number | boolean }) {
