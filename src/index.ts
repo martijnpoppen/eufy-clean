@@ -48,7 +48,13 @@ export class EufyClean {
         return [...this.eufyCleanApi.cloudDevices, ...this.eufyCleanApi.mqttDevices]
     }
 
-    public async initDevice(deviceConfig: { deviceId: string, localKey?: string, autoUpdate?: boolean, debug?: boolean }): Promise<CloudConnect | MqttConnect | null> {
+    public async initDevice(deviceConfig: { deviceId: string, localKey?: string, ip?: string, autoUpdate?: boolean, debug?: boolean }): Promise<CloudConnect | MqttConnect | LocalConnect | null> {
+        if ('localKey' in deviceConfig && 'ip' in deviceConfig) {
+            console.log('LocalConnect is deprecated, use CloudConnect instead');
+            return new LocalConnect(deviceConfig);
+        }
+
+        // Local connection doesn't require this check
         const devices = await this.getAllDevices();
         const device = devices.find(d => d.deviceId === deviceConfig.deviceId);
 
@@ -56,19 +62,13 @@ export class EufyClean {
             return null;
         }
 
-        if ('localKey' in deviceConfig && !device.mqtt) {
-            console.log('LocalConnect is deprecated, use CloudConnect instead');
-            // this.localConnect = new LocalConnect(deviceConfig);
-        }
-
         if (!('localKey' in deviceConfig) && !device.mqtt) {
-            const cloudConnect = new CloudConnect({ ...device, autoUpdate: deviceConfig.autoUpdate, debug: deviceConfig.debug }, this.eufyCleanApi,);
-            return cloudConnect;
+            return new CloudConnect({ ...device, autoUpdate: deviceConfig.autoUpdate, debug: deviceConfig.debug }, this.eufyCleanApi,);
+
         }
 
         if (!('localKey' in deviceConfig) && device.mqtt) {
-            const mqttConnect = new MqttConnect({ ...device, autoUpdate: deviceConfig.autoUpdate, debug: deviceConfig.debug }, this.openudid, this.eufyCleanApi);
-            return mqttConnect
+            return new MqttConnect({ ...device, autoUpdate: deviceConfig.autoUpdate, debug: deviceConfig.debug }, this.openudid, this.eufyCleanApi);
         }
     }
 }
