@@ -20,13 +20,18 @@ export class SharedConnect extends Base {
     }
 
     public async checkApiType(dps) {
-        if (!this.novelApi && Object.values(this.novelDPSMap).some(k => k in dps)) {
-            console.log('Novel API detected');
-            this.setApiTypes(true);
-        } else {
-            console.log('Legacy API detected');
-            this.setApiTypes(false);
+        try {
+            if (!this.novelApi && Object.values(this.novelDPSMap).some(k => k in dps)) {
+                console.log('Novel API detected');
+                this.setApiTypes(true);
+            } else {
+                console.log('Legacy API detected');
+                this.setApiTypes(false);
+            }
+        } catch (error) {
+            console.error('Error checking API type', error);
         }
+      
     }
 
     public async setApiTypes(novelApi: boolean) {
