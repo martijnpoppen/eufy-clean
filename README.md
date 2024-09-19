@@ -1,6 +1,6 @@
-# EufyClean Project
+# Eufy-Clean
 ## Overview
-The EufyClean project provides an interface to interact with Eufy cleaning devices. It includes functionalities to login, pair new devices, and manage cleaning operations through cloud and MQTT connections.
+This Eufy Clean repo provides an interface to interact with Eufy cleaning devices. It includes functionalities to login, pair new devices, and manage cleaning operations through cloud and MQTT connections.
 
 ### Installation
 1. Clone the repository:
@@ -87,6 +87,34 @@ async function main() {
     console.log(allDevices);
 
     const deviceConfig = { deviceId: 'your-device-id' };
+    const device = await eufyClean.initDevice(deviceConfig);
+    
+    await device.connect();
+
+    await device.setCleanParam({ cleanType: 'MOP_ONLY', cleanExtent: 'NARROW', mopMode: 'HIGH' });
+    
+    await device.sceneClean(10);
+}
+
+main();
+```
+
+
+## Local Example
+Eufy Clean can still be used locally via TuyAPI:
+
+```js
+import { EufyClean } from './eufy-clean';
+
+async function main() {
+    const eufyClean = new EufyClean('your-email@example.com', 'your-password');
+
+    await eufyClean.init();
+
+    const allDevices = await eufyClean.getAllDevices();
+    console.log(allDevices);
+
+    const deviceConfig = { deviceId: 'your-device-id', localKey: 'abcdefghijk' };
     const device = await eufyClean.initDevice(deviceConfig);
     
     await device.connect();
