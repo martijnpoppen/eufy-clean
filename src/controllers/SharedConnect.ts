@@ -31,7 +31,7 @@ export class SharedConnect extends Base {
         } catch (error) {
             console.error('Error checking API type', error);
         }
-      
+
     }
 
     public async setApiTypes(novelApi: boolean) {
@@ -203,13 +203,16 @@ export class SharedConnect extends Base {
                     cleanTimes: 1
                 }
             })
+
+            return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
         }
 
-        return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
+        await this.sendCommand({ [this.DPSMap.WORK_MODE]: EUFY_CLEAN_WORK_MODE.AUTO })
+        return await this.play();
     }
 
     async sceneClean(id: number) {
-        await this.stop(); 
+        await this.stop();
 
         let value = true;
         let increment = 3; // Scene 1 is 4, Scene 2 is 5, Scene 3 is 6 etc.
