@@ -1,14 +1,23 @@
 {
   "name": "eufy-clean",
   "version": "1.0.0",
-  "main": "./build/index.js",
+  "main": "build/cjs/index.js",
+  "module": "build/esm/index.js",
+  "types": "build/esm/index.d.ts",
+  "exports": {
+    "import": "./build/esm/index.js",
+    "require": "./build/cjs/index.js"
+  },
   "scripts": {
     "dev": "tsnd --respawn --files ./src",
     "clean": "rimraf build/",
-    "copy-files": "copyfiles -u 1 src/**/*.proto src/**/*.js build/",
-    "copy-build": "cp -r ./build ../../com.eufylife.home/lib/eufy-clean/build && cp -r ./package.json ../../com.eufylife.home/lib/eufy-clean/ && cp -r ./tsconfig.json ../../com.eufylife.home/lib/eufy-clean/",
-    "clear-build": "rimraf ../../com.eufylife.home/lib/eufy-clean/build",
-    "build": "yarn clean && tsc && yarn copy-files && yarn clear-build && yarn copy-build",
+    "copy-files": "copyfiles -u 1 src/**/*.proto src/**/*.js src/**/*.tgz build/esm && copyfiles -u 1 src/**/*.proto src/**/*.js src/**/*.tgz build/cjs",
+    "build:cjs": "tsc --project tsconfig.cjs.json",
+    "build:esm": "tsc --project tsconfig.esm.json",
+    "build": "yarn clean && yarn build:cjs && yarn build:esm && yarn copy-files",
+    "build:homey": "yarn build && yarn homey-clear-build && yarn homey-copy-build",
+    "homey-copy-build": "cp -r ./build ../../com.eufylife.security/lib/eufy-clean/build && cp -r ./package.json ../../com.eufylife.security/lib/eufy-clean/ && cp -r ./tsconfig.json ../../com.eufylife.security/lib/eufy-clean/",
+    "homey-clear-build": "rimraf ../../com.eufylife.security/lib/eufy-clean/build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -23,10 +32,15 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@tuyapi/cloud": "^0.6.2",
-    "tuyapi": "github:codetheweb/tuyapi",
     "axios": "^1.6.8",
+    "got": "^11.8.5",
+    "is": "^3.3.0",
     "mqtt": "^5.5.5",
-    "protobufjs": "^7.3.0"
+    "node-rsa": "^1.1.1",
+    "protobufjs": "^7.3.0",
+    "randomatic": "^3.1.1",
+    "sort-keys-recursive": "^2.1.7",
+    "tuyapi": "github:codetheweb/tuyapi",
+    "uuid": "^9.0.0"
   }
 }

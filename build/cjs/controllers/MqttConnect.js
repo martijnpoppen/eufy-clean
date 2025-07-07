@@ -1,0 +1,137 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MqttConnect = void 0;
+// Communication with the Eufy cloud - This goes via MQTT
+// This is only supported for "new" devices like the RoboVac X10 and RoboVac S1
+const mqtt_1 = __importDefault(require("mqtt"));
+const SharedConnect_1 = require("./SharedConnect");
+const utils_1 = require("../lib/utils");
+class MqttConnect extends SharedConnect_1.SharedConnect {
+    mqttClient;
+    mqttCredentials;
+    openudid;
+    eufyCleanApi;
+    constructor(config, openudid, eufyCleanApi) {
+        super(config);
+        this.deviceId = config.deviceId;
+        this.deviceModel = config.deviceModel;
+        this.config = config;
+        this.debugLog = config.debug || false;
+        this.openudid = openudid;
+        this.eufyCleanApi = eufyCleanApi;
+    }
+    async connect() {
+        await this.eufyCleanApi.login({ mqtt: true, tuya: false });
+        await this.connectMqtt(this.eufyCleanApi.mqttCredentials);
+        await this.updateDevice(true);
+        await (0, utils_1.sleep)(2000); // Make sure the device is ready
+    }
+    async updateDevice(checkApiType = false) {
+        try {
+            if (!checkApiType)
+                return;
+            const device = await this.eufyCleanApi.getMqttDevice(this.deviceId);
+            const deviceAdminUserId = device?.member?.admin_user_id || device?.member?.member_user_id || this.eufyCleanApi.mqttCredentials.user_id;
+            if (deviceAdminUserId !== this.eufyCleanApi.mqttCredentials.user_id) {
+                console.error(`Device ${this.deviceId} is not owned by the user ${this.eufyCleanApi.mqttCredentials.user_id}`, device);
+                console.log(`Overriding mqttCredentials with device admin user_id: ${deviceAdminUserId}`);
+                this.mqttCredentials.user_id = deviceAdminUserId;
+            }
+            if (checkApiType) {
+                await this.checkApiType(device?.dps);
+            }
+            await this.mapData(device?.dps);
+        }
+        catch (error) {
+            console.log(error);
+        }
+    }
+    async connectMqtt(mqttCredentials) {
+        if (mqttCredentials) {
+            console.info('MQTT Credentials found');
+            this.mqttCredentials = mqttCredentials;
+            console.info('Setup MQTT Connection', {
+                clientId: `android-${this.mqttCredentials.app_name}-eufy_android_${this.openudid}_${this.mqttCredentials.user_id}-${Date.now()}`,
+                username: this.mqttCredentials.thing_name
+            });
+            if (this.mqttClient) {
+                this.mqttClient.end();
+            }
+            this.mqttClient = await mqtt_1.default.connect('mqtt://' + this.mqttCredentials.endpoint_addr, {
+                clientId: `android-${this.mqttCredentials.app_name}-eufy_android_${this.openudid}_${this.mqttCredentials.user_id}-${Date.now()}`,
+                username: this.mqttCredentials.thing_name,
+                cert: Buffer.from(this.mqttCredentials.certificate_pem, 'utf8'),
+                key: Buffer.from(this.mqttCredentials.private_key, 'utf8')
+            });
+            this.setupListeners();
+        }
+    }
+    setupListeners() {
+        this.mqttClient.on('connect', () => {
+            console.info('Connected to MQTT');
+            console.debug(`Subscribe to cmd/eufy_home/${this.deviceModel}/${this.deviceId}/res`);
+            this.mqttClient && this.mqttClient.subscribe(`cmd/eufy_home/${this.deviceModel}/${this.deviceId}/res`);
+            console.debug(`Subscribe to smart/mb/in/${this.deviceId}`);
+            this.mqttClient && this.mqttClient.subscribe(`smart/mb/in/${this.deviceId}`);
+        });
+        this.mqttClient.on('message', async (topic, message) => {
+            const messageParsed = JSON.parse(message.toString());
+            if (this.debugLog)
+                console.log(`Received message on ${topic}: `, messageParsed);
+            console.debug(`Received message on ${topic}: `, messageParsed?.payload?.data);
+            await this.mapData(messageParsed?.payload?.data);
+        });
+        this.mqttClient.on('error', (error) => {
+            console.error(`MQTT Error: ${error}`);
+        });
+        this.mqttClient.on('close', () => {
+            console.error('MQTT Connection closed');
+        });
+        this.mqttClient.on('reconnect', () => {
+            console.info('MQTT Reconnect');
+        });
+        this.mqttClient.on('offline', () => {
+            console.error('MQTT Offline');
+        });
+        this.mqttClient.on('end', () => {
+            console.info('MQTT End');
+        });
+    }
+    async sendCommand(dataPayload) {
+        try {
+            const payload = JSON.stringify({
+                account_id: this.mqttCredentials.user_id,
+                data: dataPayload,
+                device_sn: this.deviceId,
+                protocol: 2,
+                t: Date.now(),
+            });
+            const mqqtVal = {
+                head: {
+                    client_id: `android-${this.mqttCredentials.app_name}-eufy_android_${this.openudid}_${this.mqttCredentials.user_id}`,
+                    cmd: 65537,
+                    cmd_status: 1,
+                    msg_seq: 2,
+                    seed: '',
+                    sess_id: `android-${this.mqttCredentials.app_name}-eufy_android_${this.openudid}_${this.mqttCredentials.user_id}`,
+                    sign_code: 0,
+                    timestamp: Date.now(),
+                    version: '1.0.0.1',
+                },
+                payload
+            };
+            if (this.debugLog)
+                console.debug(JSON.stringify(mqqtVal));
+            console.debug(`Sending command to device ${this.deviceId}`, payload);
+            this.mqttClient.publish(`cmd/eufy_home/${this.deviceModel}/${this.deviceId}/req`, JSON.stringify(mqqtVal));
+            this.mqttClient.publish(`smart/mb/out/${this.deviceId}`, JSON.stringify(mqqtVal));
+        }
+        catch (error) {
+            console.error(error);
+        }
+    }
+}
+exports.MqttConnect = MqttConnect;
