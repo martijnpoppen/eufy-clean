@@ -42,7 +42,8 @@ class EufyClean {
         await this.eufyCleanApi.init();
         return {
             cloudDevices: this.eufyCleanApi.cloudDevices,
-            mqttDevices: this.eufyCleanApi.mqttDevices
+            mqttDevices: this.eufyCleanApi.mqttDevices,
+            eufyApiDevices: this.eufyCleanApi.eufyApiDevices
         };
     }
     async getCloudDevices() {

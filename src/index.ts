@@ -31,7 +31,8 @@ export class EufyClean {
 
         return {
             cloudDevices: this.eufyCleanApi.cloudDevices,
-            mqttDevices: this.eufyCleanApi.mqttDevices
+            mqttDevices: this.eufyCleanApi.mqttDevices,
+            eufyApiDevices: this.eufyCleanApi.eufyApiDevices
         };
     }
 
