@@ -38,7 +38,7 @@ export const decode = async function (proto, type, base64Value) {
     return decodedObject;
 };
 
-export const encode = async function(proto, type, object) {
+export const encode = async function (proto, type, object) {
     const root = await getProtoFile(proto);
 
     const protoLookupType = root.lookupType(type);
@@ -69,7 +69,7 @@ export const getMultiData = async function (proto, type, base64Value) {
     const buffer = Buffer.from(base64Value, 'base64');
     const values = [];
 
-    if(protoLookupType.fields) {
+    if (protoLookupType.fields) {
         // @ts-ignore
         const fieldKeys = Object.values(protoLookupType.fields).map((field) => field?.type);
 
@@ -83,7 +83,7 @@ export const getMultiData = async function (proto, type, base64Value) {
                     bytes: String // Bytes will be converted to base64 strings
                 });
 
-                values.push({key: fieldKey, ...decodedObject});
+                values.push({ key: fieldKey, ...decodedObject });
             } catch (e) {
                 // console.log('error', e);
             }
@@ -93,6 +93,6 @@ export const getMultiData = async function (proto, type, base64Value) {
     return values;
 };
 
-const getKeyByValue = function(object, value) {
+const getKeyByValue = function (object, value) {
     return Object.keys(object).find(key => object[key] === value);
 }
