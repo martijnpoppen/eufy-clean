@@ -67,10 +67,10 @@ class EufyClean {
             return null;
         }
         if (!('localKey' in deviceConfig) && !device.mqtt) {
-            return new CloudConnect_1.CloudConnect({ ...device, autoUpdate: deviceConfig.autoUpdate, debug: deviceConfig.debug }, this.eufyCleanApi);
+            return new CloudConnect_1.CloudConnect({ ...device, debug: deviceConfig.debug }, this.eufyCleanApi);
         }
         if (!('localKey' in deviceConfig) && device.mqtt) {
-            return new MqttConnect_1.MqttConnect({ ...device, autoUpdate: deviceConfig.autoUpdate, debug: deviceConfig.debug }, this.openudid, this.eufyCleanApi);
+            return new MqttConnect_1.MqttConnect({ ...device, debug: deviceConfig.debug }, this.openudid, this.eufyCleanApi);
         }
     }
 }

@@ -10,15 +10,13 @@ export class SharedConnect extends Base {
     public deviceId: string;
     public deviceModel: string;
     public config = {};
-    public emit?: (event: string, ...args: any[]) => Promise<void>;
 
-    constructor(config: { deviceId: string, deviceModel?: string, debug?: boolean, emit?: (event: string, ...args: any[]) => Promise<void> }) {
+    constructor(config: { deviceId: string, deviceModel?: string, debug?: boolean }) {
         super();
 
         this.deviceId = config.deviceId;
         this.deviceModel = config.deviceModel || '';
         this.debugLog = config.debug || false;
-        this.emit = config.emit || undefined;
     }
 
     public async checkApiType(dps) {
@@ -58,10 +56,6 @@ export class SharedConnect extends Base {
         if (this.debugLog) console.debug('mappedData', this.robovacData);
 
         this.getControlResponse();
-
-        if (this.emit) {
-            this.emit('eufy-clean:data', this.deviceId, this.robovacData);
-        }
     }
 
     public async getRobovacData() {

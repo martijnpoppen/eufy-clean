@@ -53,10 +53,11 @@ class MqttConnect extends SharedConnect_1.SharedConnect {
         if (mqttCredentials) {
             console.info('MQTT Credentials found');
             this.mqttCredentials = mqttCredentials;
-            console.info('Setup MQTT Connection', {
-                clientId: `android-${this.mqttCredentials.app_name}-eufy_android_${this.openudid}_${this.mqttCredentials.user_id}-${Date.now()}`,
-                username: this.mqttCredentials.thing_name
-            });
+            // console.info('Setup MQTT Connection', {
+            //     clientId: `android-${this.mqttCredentials.app_name}-eufy_android_${this.openudid}_${this.mqttCredentials.user_id
+            //         }-${Date.now()}`,
+            //     username: this.mqttCredentials.thing_name
+            // });
             if (this.mqttClient) {
                 this.mqttClient.end();
             }

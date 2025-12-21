@@ -3,14 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CloudConnect = void 0;
 const SharedConnect_1 = require("./SharedConnect");
 class CloudConnect extends SharedConnect_1.SharedConnect {
-    autoUpdate;
     eufyCleanApi;
     constructor(config, eufyCleanApi) {
         super(config);
         this.deviceId = config.deviceId;
         this.deviceModel = config.deviceModel || '';
         this.config = config;
-        this.autoUpdate = config.autoUpdate || 0;
         this.debugLog = config.debug || false;
         this.eufyCleanApi = eufyCleanApi;
     }

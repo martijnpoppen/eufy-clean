@@ -12,15 +12,12 @@ export class EufyClean {
     private username: string;
     private password: string;
 
-    private emit?: (event: string, ...args: any[]) => Promise<void>;
-
     // if the deviceconfig and mqttCredentials are provided the connection will be automatically setup
-    constructor(username?: string, password?: string, emit?: (event: string, ...args: any[]) => Promise<void>) {
+    constructor(username?: string, password?: string) {
         console.log('EufyClean constructor');
         this.username = username;
         this.password = password;
         this.openudid = crypto.randomBytes(16).toString('hex');
-        this.emit = emit || undefined;
     }
 
     // Use this method to login and pair new devices.
@@ -65,12 +62,12 @@ export class EufyClean {
         }
 
         if (!('localKey' in deviceConfig) && !device.mqtt) {
-            return new CloudConnect({ ...device, debug: deviceConfig.debug, emit: this.emit }, this.eufyCleanApi);
+            return new CloudConnect({ ...device, debug: deviceConfig.debug }, this.eufyCleanApi);
 
         }
 
         if (!('localKey' in deviceConfig) && device.mqtt) {
-            return new MqttConnect({ ...device, debug: deviceConfig.debug, emit: this.emit }, this.openudid, this.eufyCleanApi);
+            return new MqttConnect({ ...device, debug: deviceConfig.debug }, this.openudid, this.eufyCleanApi);
         }
     }
 }
