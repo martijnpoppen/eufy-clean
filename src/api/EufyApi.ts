@@ -44,7 +44,7 @@ export class EufyApi {
                 'Content-Type': 'application/json',
                 clientType: '1',
                 language: 'nl',
-                'User-Agent': 'EufyHome-iOS-2.14.0-6',
+                "User-Agent": "EufyHome-Android-3.1.3-753",
                 timezone: 'Europe/Berlin',
                 country: 'NL',
                 Connection: 'keep-alive',
