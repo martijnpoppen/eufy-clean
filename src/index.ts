@@ -47,9 +47,8 @@ export class EufyClean {
         return [...this.eufyCleanApi.cloudDevices, ...this.eufyCleanApi.mqttDevices]
     }
 
-    public async initDevice(deviceConfig: { deviceId: string, localKey?: string, ip?: string, debug?: boolean }): Promise<CloudConnect | MqttConnect | LocalConnect | null> {
-        if ('localKey' in deviceConfig && 'ip' in deviceConfig && deviceConfig.localKey) {
-            console.log('LocalConnect is deprecated, use CloudConnect instead');
+    public async initDevice(deviceConfig: { deviceId: string, localKey?: string, ip?: string, version?: string, mapId?: number, findTimeoutSeconds?: number, debug?: boolean }): Promise<CloudConnect | MqttConnect | LocalConnect | null> {
+        if ('localKey' in deviceConfig && deviceConfig.localKey) {
             return new LocalConnect(deviceConfig);
         }
 

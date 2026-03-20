@@ -43,8 +43,8 @@ export const encode = async function (proto, type, object) {
 
     const protoLookupType = root.lookupType(type);
 
-    // Create a new message from the object
-    const message = protoLookupType.create(object);
+    // Convert plain objects so enum/string fields are mapped correctly.
+    const message = protoLookupType.fromObject(object);
 
 
     // Encode the message to a buffer using encodeDelimited

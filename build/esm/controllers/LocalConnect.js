@@ -1,15 +1,17 @@
 "use strict";
-// Communication with the Local Tuya API
-// This is only supported for "old" devices like the RoboVac G30
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LocalConnect = void 0;
-// As of july 2024 this is not used in the main codebase, but it's here for reference
 const utils_1 = require("../lib/utils");
 const SharedConnect_1 = require("./SharedConnect");
 const tuyapi_1 = __importDefault(require("tuyapi"));
+const PROBE_DPS = [
+    2, 5, 15, 101, 103, 104, 106, 109, 110, 111, 116, 117, 124, 125, 126, 135, 142,
+    151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163,
+    164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180
+];
 class LocalConnect extends SharedConnect_1.SharedConnect {
     api;
     didCheckApiType;
@@ -21,6 +23,7 @@ class LocalConnect extends SharedConnect_1.SharedConnect {
         this.config = config;
         this.debugLog = config.debug || false;
         this.didCheckApiType = false;
+        this.connected = false;
     }
     async setupApi(config) {
         this.api = new tuyapi_1.default({
@@ -28,7 +31,8 @@ class LocalConnect extends SharedConnect_1.SharedConnect {
             key: config.localKey,
             ip: config.ip,
             port: 6668,
-            version: '3.3'
+            version: config.version || '3.3',
+            issueRefreshOnConnect: true
         });
         this.api.on('error', (error) => {
             console.error('Robovac Error', error);
@@ -58,25 +62,24 @@ class LocalConnect extends SharedConnect_1.SharedConnect {
     async connect() {
         if (!this.connected) {
             await this.setupApi(this.config);
-            await (0, utils_1.sleep)(2000);
+            await (0, utils_1.sleep)(500);
             console.log('Connecting...');
-            await this.api.connect().catch(error => {
-                console.log(error);
-                console.error(`Failed to connect to device please close the app or check your network. Please allow port 6668 via TCP from the device IP. ${error}`);
-            });
+            await this.connectWithFallback();
         }
-        await this.api.refresh({ schema: true });
+        await this.refreshDeviceState();
         setTimeout(() => {
             this.formatStatus();
         }, 2000);
     }
     async disconnect() {
         console.log('Disconnecting...');
-        await this.api.disconnect();
+        if (this.api) {
+            await this.api.disconnect();
+        }
     }
     async updateDevice() {
         try {
-            await this.api?.refresh({ schema: true });
+            await this.refreshDeviceState();
         }
         catch (error) {
             console.log(error);
@@ -90,6 +93,54 @@ class LocalConnect extends SharedConnect_1.SharedConnect {
             multiple: true,
             data: data
         });
+    }
+    getResolvedIp() {
+        return this.api?.device?.ip || this.config?.ip;
+    }
+    async connectWithFallback() {
+        try {
+            if (!this.config.ip) {
+                await this.findDevice();
+            }
+            await this.api.connect();
+            this.config.ip = this.getResolvedIp() || this.config.ip;
+        }
+        catch (error) {
+            if (!this.config.ip) {
+                throw error;
+            }
+            console.warn('Direct local connection failed, retrying with discovery.', error);
+            this.connected = false;
+            await this.findDevice(true);
+            await this.api.connect();
+            this.config.ip = this.getResolvedIp() || this.config.ip;
+        }
+    }
+    async findDevice(force = false) {
+        if (force) {
+            this.api.device && (this.api.device.ip = undefined);
+            this.config.ip = undefined;
+        }
+        const foundDevice = await this.api.find({
+            timeout: this.config.findTimeoutSeconds || 10
+        });
+        const resolvedIp = foundDevice?.ip || this.api?.device?.ip;
+        if (resolvedIp) {
+            this.config.ip = resolvedIp;
+        }
+    }
+    async refreshDeviceState() {
+        const basePayload = await this.api?.get({ schema: true }).catch(() => undefined);
+        if (basePayload?.dps) {
+            await this.onUpdate(basePayload.dps);
+        }
+        const refreshPayload = await this.api?.refresh({
+            schema: true,
+            requestedDPS: PROBE_DPS
+        }).catch(() => undefined);
+        if (refreshPayload?.dps) {
+            await this.onUpdate(refreshPayload.dps);
+        }
     }
 }
 exports.LocalConnect = LocalConnect;

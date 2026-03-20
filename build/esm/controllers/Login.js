@@ -76,6 +76,9 @@ class EufyLogin extends Base_1.Base {
                 this.cloudDevices = await this.tuyaApi.getDeviceList();
                 this.cloudDevices = this.cloudDevices.map(device => ({
                     ...this.findModel(device.devId),
+                    localKey: device.localKey,
+                    productId: device.productId,
+                    ip: device.ip,
                     apiType: this.checkApiType(device.dps),
                     mqtt: false,
                     dps: device?.dps || {}

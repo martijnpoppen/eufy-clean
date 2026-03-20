@@ -56,8 +56,7 @@ class EufyClean {
         return [...this.eufyCleanApi.cloudDevices, ...this.eufyCleanApi.mqttDevices];
     }
     async initDevice(deviceConfig) {
-        if ('localKey' in deviceConfig && 'ip' in deviceConfig && deviceConfig.localKey) {
-            console.log('LocalConnect is deprecated, use CloudConnect instead');
+        if ('localKey' in deviceConfig && deviceConfig.localKey) {
             return new LocalConnect_1.LocalConnect(deviceConfig);
         }
         // Local connection doesn't require this check

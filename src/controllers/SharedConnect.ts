@@ -3,13 +3,17 @@ import { EUFY_CLEAN_WORK_MODE, EUFY_CLEAN_NOVEL_CLEAN_SPEED, EUFY_CLEAN_CONTROL 
 import { EUFY_CLEAN_X_SERIES, EUFY_CLEAN_E_SERIES } from "../constants/devices.constants";
 import { decode, getMultiData, getProtoFile, encode } from '../lib/utils';
 
+const LOCAL_NOVEL_FALLBACK_DPS = ['151', '156', '158', '159', '160', '161', '163', '177'];
+
 export class SharedConnect extends Base {
     public novelApi: boolean = false;
     public robovacData: any = {};
+    public rawDps: Record<string, any> = {};
     public debugLog: boolean;
     public deviceId: string;
     public deviceModel: string;
-    public config = {};
+    public config: any = {};
+    private seq: number;
 
     constructor(config: { deviceId: string, deviceModel?: string, debug?: boolean }) {
         super();
@@ -17,6 +21,7 @@ export class SharedConnect extends Base {
         this.deviceId = config.deviceId;
         this.deviceModel = config.deviceModel || '';
         this.debugLog = config.debug || false;
+        this.seq = Math.floor(Date.now() % 1000);
     }
 
     public async checkApiType(dps) {
@@ -24,7 +29,7 @@ export class SharedConnect extends Base {
             if (!this.novelApi && Object.values(this.novelDPSMap).some(k => k in dps)) {
                 console.log('Novel API detected');
                 this.setApiTypes(true);
-            } else {
+            } else if (!this.novelApi) {
                 console.log('Legacy API detected');
                 this.setApiTypes(false);
             }
@@ -38,11 +43,13 @@ export class SharedConnect extends Base {
         this.novelApi = novelApi;
 
         this.DPSMap = this.novelApi ? this.novelDPSMap : this.legacyDPSMap;
-        this.robovacData = { ...this.DPSMap }; // Make shallow copy of DPSMap
+        this.robovacData = { ...this.DPSMap };
     }
 
 
     public mapData(dps: any) {
+        this.rawDps = { ...this.rawDps, ...(dps || {}) };
+
         for (const key in dps) {
             const mappedKeys = Object.keys(this.DPSMap).filter(k => this.DPSMap[k] === key);
 
@@ -62,6 +69,36 @@ export class SharedConnect extends Base {
         return this.robovacData;
     }
 
+    public async listScenes(): Promise<Array<{ id: number; name: string; mapId?: number }>> {
+        const raw = this.rawDps['180'] || this.robovacData?.SCENES;
+        if (typeof raw !== 'string') {
+            return [];
+        }
+
+        try {
+            const value = await decode('./proto/cloud/scene.proto', 'SceneResponse', raw);
+            const infos = Array.isArray(value?.infos) ? value.infos : [];
+
+            return infos
+                .map((info: any) => ({
+                    id: Number(info?.id?.value ?? 0),
+                    name: String(info?.name ?? '').trim(),
+                    mapId: info?.mapid ? Number(info.mapid) : undefined
+                }))
+                .filter((scene) => scene.id > 0 && scene.name);
+        } catch (error) {
+            console.error(error);
+            return [];
+        }
+    }
+
+    public supportsNamedScenes(): boolean {
+        return !!this.config?.mqtt;
+    }
+
+    public supportsNumericRoomClean(): boolean {
+        return !!this.config?.localKey && (this.novelApi || this.canUseMappedLocalFallback());
+    }
 
     async getCleanSpeed() {
         if (typeof this.robovacData?.CLEAN_SPEED === 'number' || this.robovacData?.CLEAN_SPEED?.length === 1) {
@@ -76,7 +113,6 @@ export class SharedConnect extends Base {
     async getControlResponse() {
         try {
             if (this.novelApi) {
-                //BAgNEH0=
                 const value = await decode('./proto/cloud/control.proto', 'ModeCtrlResponse', 'AhB8');
                 return value || {};
             }
@@ -195,17 +231,13 @@ export class SharedConnect extends Base {
     }
 
     async autoClean() {
-        let value = true;
-
-        if (this.novelApi) {
-            value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
+        if (this.novelApi || this.canUseLocalNovelControlFallback()) {
+            return await this.sendNovelControlCommand({
                 method: EUFY_CLEAN_CONTROL.START_AUTO_CLEAN,
                 autoClean: {
                     cleanTimes: 1
                 }
-            })
-
-            return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
+            });
         }
 
         await this.sendCommand({ [this.DPSMap.WORK_MODE]: EUFY_CLEAN_WORK_MODE.AUTO })
@@ -213,88 +245,86 @@ export class SharedConnect extends Base {
     }
 
     async sceneClean(id: number) {
-        await this.stop();
-
-        let value = true;
-        let increment = 3; // Scene 1 is 4, Scene 2 is 5, Scene 3 is 6 etc.
-
-        if (this.novelApi) {
-            value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
+        if (this.novelApi || this.supportsNamedScenes()) {
+            return await this.sendNovelControlCommand({
                 method: EUFY_CLEAN_CONTROL.START_SCENE_CLEAN,
                 sceneClean: {
-                    sceneId: id + increment
+                    sceneId: id
                 }
-            })
+            });
         }
 
-        return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
+        return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: true });
+    }
+
+    async sceneCleanSlot(slot: number) {
+        if (this.novelApi || this.supportsNamedScenes()) {
+            return await this.sendNovelControlCommand({
+                method: EUFY_CLEAN_CONTROL.START_SCENE_CLEAN,
+                sceneClean: {
+                    sceneId: slot + 3
+                }
+            });
+        }
+
+        return await this.sceneClean(slot);
     }
 
     async play() {
         let value = true;
 
-        if (this.novelApi) {
-            value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
+        if (this.novelApi || this.canUseLocalNovelControlFallback()) {
+            return await this.sendNovelControlCommand({
                 method: EUFY_CLEAN_CONTROL.RESUME_TASK
-            })
+            });
         }
 
         return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
     }
 
     async pause() {
-        let value = false
-
-        if (this.novelApi) {
-            value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
+        if (this.novelApi || this.canUseLocalNovelControlFallback()) {
+            return await this.sendNovelControlCommand({
                 method: EUFY_CLEAN_CONTROL.PAUSE_TASK
-            })
+            });
         }
 
-        return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
+        return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: false })
     }
 
     async stop() {
-        let value = false
-
-        if (this.novelApi) {
-            value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
+        if (this.novelApi || this.canUseLocalNovelControlFallback()) {
+            return await this.sendNovelControlCommand({
                 method: EUFY_CLEAN_CONTROL.STOP_TASK
-            })
+            });
         }
 
-        return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
+        return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: false })
     }
 
     async goHome() {
-        if (this.novelApi) {
-            const value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
+        if (this.novelApi || this.canUseLocalNovelControlFallback()) {
+            return await this.sendNovelControlCommand({
                 method: EUFY_CLEAN_CONTROL.START_GOHOME
             });
-
-            return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
         }
 
         return await this.sendCommand({ [this.DPSMap.GO_HOME]: true })
     }
 
     async spotClean() {
-        if (this.novelApi) {
-            const value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
+        if (this.novelApi || this.canUseLocalNovelControlFallback()) {
+            return await this.sendNovelControlCommand({
                 method: EUFY_CLEAN_CONTROL.START_SPOT_CLEAN
             });
-
-            return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
         }
     }
 
     async roomClean() {
-        if (this.novelApi) {
-            const value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
+        if (this.novelApi || this.canUseMappedLocalFallback()) {
+            return await this.sendNovelControlCommand({
                 method: EUFY_CLEAN_CONTROL.START_SELECT_ROOMS_CLEAN
             });
-
-            return await this.sendCommand({ [this.DPSMap.PLAY_PAUSE]: value })
         }
 
 
@@ -305,6 +335,34 @@ export class SharedConnect extends Base {
 
         await this.sendCommand({ [this.DPSMap.WORK_MODE]: EUFY_CLEAN_WORK_MODE.ROOM })
         return await this.play();
+    }
+
+    async cleanRooms(roomIds: number[], cleanTimes = 1) {
+        const normalizedRoomIds = roomIds
+            .map((roomId) => Number.parseInt(String(roomId), 10))
+            .filter((roomId) => Number.isFinite(roomId) && roomId > 0);
+
+        if (!normalizedRoomIds.length) {
+            throw new Error('Please provide at least one valid room ID.');
+        }
+
+        if (this.novelApi || this.canUseMappedLocalFallback()) {
+            const mapId = Number(this.config?.mapId || 0);
+
+            return await this.sendNovelControlCommand({
+                method: EUFY_CLEAN_CONTROL.START_SELECT_ROOMS_CLEAN,
+                selectRoomsClean: {
+                    rooms: normalizedRoomIds.map((id, index) => ({
+                        id,
+                        order: index + 1
+                    })),
+                    cleanTimes: cleanTimes > 0 ? cleanTimes : 1,
+                    ...(mapId > 0 ? { mapId } : {})
+                }
+            });
+        }
+
+        return await this.roomClean();
     }
 
     async setCleanParam(config: { cleanType?: 'SWEEP_AND_MOP' | 'SWEEP_ONLY' | 'MOP_ONLY', mopMode?: 'HIGH' | 'MEDIUM' | 'LOW', cleanExtent?: 'NORMAL' | 'NARROW' | 'QUICK' }) {
@@ -342,5 +400,36 @@ export class SharedConnect extends Base {
 
     public async sendCommand(data: { [key: string]: string | number | boolean }) {
         throw new Error('Method not implemented.');
+    }
+
+    private nextSeq(): number {
+        this.seq = (this.seq % 65535) + 1;
+        return this.seq;
+    }
+
+    private hasNovelLocalControlSignals(): boolean {
+        return !!this.config?.localKey && Object.keys(this.rawDps).some((key) => LOCAL_NOVEL_FALLBACK_DPS.includes(key));
+    }
+
+    private canUseLocalNovelControlFallback(): boolean {
+        return !this.novelApi && this.hasNovelLocalControlSignals();
+    }
+
+    private canUseMappedLocalFallback(): boolean {
+        const mapId = Number(this.config?.mapId || 0);
+        return this.canUseLocalNovelControlFallback() && mapId > 0;
+    }
+
+    private getNovelControlDp(): string {
+        return this.novelApi ? this.DPSMap.PLAY_PAUSE : this.novelDPSMap.PLAY_PAUSE;
+    }
+
+    private async sendNovelControlCommand(command: Record<string, any>) {
+        const value = await encode('proto/cloud/control.proto', 'ModeCtrlRequest', {
+            seq: this.nextSeq(),
+            ...command
+        });
+
+        return await this.sendCommand({ [this.getNovelControlDp()]: value });
     }
 }
